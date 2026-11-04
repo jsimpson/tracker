@@ -1,0 +1,1145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>FIGHTER // POLARIZED GREEN</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            tn: {
+              bg: '#1a1b26',
+              dark: '#16161e',
+              card: '#24283b',
+              card2: '#1f2335',
+              border: '#292e42',
+              muted: '#565f89',
+              text: '#c0caf5',
+              subtext: '#a9b1d6',
+              green: '#73daca',
+              cyan: '#7dcfff',
+              blue: '#7aa2f7',
+              orange: '#ff9e64',
+              coral: '#f7768e'
+            }
+          },
+          fontFamily: {
+            mono: ['ui-monospace', 'SFMono-Regular', 'Menlo', 'Monaco', 'Consolas', 'monospace'],
+            sans: ['Inter', 'ui-sans-serif', 'system-ui', 'sans-serif']
+          }
+        }
+      }
+    };
+  </script>
+  <style>
+    * { box-sizing: border-box; }
+    html, body {
+      max-width: 100vw;
+      overflow-x: hidden;
+      touch-action: manipulation;
+    }
+    body {
+      padding-top: env(safe-area-inset-top, 0px);
+      padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 5.5rem);
+      -webkit-tap-highlight-color: transparent;
+      user-select: none;
+    }
+    .min-touch {
+      min-height: 48px;
+    }
+    input[type="number"]::-webkit-inner-spin-button, 
+    input[type="number"]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+  </style>
+</head>
+<body class="bg-tn-bg text-tn-text font-sans min-h-screen flex flex-col antialiased">
+
+  <!-- TOP HEADER -->
+  <header class="border-b border-tn-border bg-tn-card/95 backdrop-blur sticky top-0 z-30 w-full">
+    <div class="w-full max-w-lg mx-auto px-3 py-2 flex flex-wrap items-center justify-between gap-2">
+      <div class="flex items-center gap-2">
+        <span class="text-xs font-mono font-bold tracking-widest text-tn-green uppercase">FIGHTER</span>
+        <span class="text-[10px] px-1.5 py-0.5 rounded bg-tn-green/15 text-tn-green font-mono border border-tn-green/30 font-bold">POLARIZED GREEN</span>
+      </div>
+      <div class="flex items-center gap-2 font-mono text-[11px]">
+        <span class="text-tn-muted">T-MINUS:</span>
+        <span id="countdownDisplay" class="text-tn-orange font-bold">--D</span>
+        <button type="button" onclick="toggleWakeLock()" class="px-2 py-1 rounded border border-tn-border bg-tn-dark text-[10px] text-tn-muted flex items-center gap-1.5">
+          <span class="w-1.5 h-1.5 rounded-full bg-tn-muted" id="wakeLockIndicator"></span>
+          <span id="wakeLockText">SCREEN</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- NAVIGATION TABS -->
+    <div class="w-full max-w-lg mx-auto px-2 flex border-t border-tn-border/60 text-xs">
+      <button type="button" onclick="switchView('today')" id="tab-today" class="flex-1 py-2 text-center border-b-2 font-medium transition-colors border-tn-green text-tn-green">Log</button>
+      <button type="button" onclick="switchView('weekly')" id="tab-weekly" class="flex-1 py-2 text-center border-b-2 font-medium transition-colors border-transparent text-tn-subtext">Week</button>
+      <button type="button" onclick="switchView('matrix')" id="tab-matrix" class="flex-1 py-2 text-center border-b-2 font-medium transition-colors border-transparent text-tn-subtext">Matrix</button>
+      <button type="button" onclick="switchView('settings')" id="tab-settings" class="flex-1 py-2 text-center border-b-2 font-medium transition-colors border-transparent text-tn-subtext">TMs</button>
+    </div>
+  </header>
+
+  <!-- MAIN CONTAINER -->
+  <main class="w-full max-w-lg mx-auto px-3 mt-3 flex-1 space-y-3">
+
+    <!-- VIEW 1: DAILY LOG -->
+    <section id="view-today" class="space-y-3 w-full">
+      <!-- Week Select & Progress Row -->
+      <div class="bg-tn-card border border-tn-border rounded-xl p-2.5 flex flex-wrap items-center justify-between gap-2 w-full">
+        <select id="weekSelect" onchange="onWeekChange(this.value)" class="bg-tn-dark text-white border border-tn-border rounded px-2.5 py-1 text-xs font-mono focus:outline-none focus:border-tn-green">
+          <!-- Populated by JS -->
+        </select>
+        <div class="text-[11px] font-mono text-tn-subtext flex items-center gap-1.5">
+          <span>PROGRESS:</span>
+          <span id="globalProgressPercent" class="text-tn-green font-bold">0%</span>
+        </div>
+      </div>
+
+      <!-- Horizontal Day Scroller -->
+      <div class="bg-tn-dark p-1 rounded-xl border border-tn-border flex gap-1 overflow-x-auto w-full" id="dayButtonsContainer">
+        <!-- Rendered by JS -->
+      </div>
+
+      <!-- Day Log Card -->
+      <div class="bg-tn-card border border-tn-border rounded-xl p-3 sm:p-4 shadow-sm space-y-3 w-full">
+        <div class="flex items-center justify-between border-b border-tn-border/80 pb-2">
+          <div>
+            <h2 id="dayHeaderDay" class="text-sm font-mono font-bold text-white uppercase tracking-wider">MONDAY</h2>
+            <span id="dayHeaderSubtitle" class="text-[11px] font-mono text-tn-green block">Barbell Press, Barbell Squat, Pull-ups</span>
+          </div>
+          <button type="button" onclick="toggleEntireDay()" id="dayCompleteBtn" class="min-touch px-3 py-1.5 rounded-lg border text-xs font-mono font-bold transition flex items-center gap-1.5 bg-tn-dark border-tn-border text-tn-subtext">
+            Log Day
+          </button>
+        </div>
+
+        <!-- Exercises / Runs -->
+        <div id="dayExecutionDetails" class="space-y-2.5 w-full">
+          <!-- Populated by JS -->
+        </div>
+      </div>
+    </section>
+
+    <!-- VIEW 2: WEEKLY SCHEDULE -->
+    <section id="view-weekly" class="hidden space-y-2.5 w-full">
+      <div class="flex items-center justify-between bg-tn-card border border-tn-border p-2.5 rounded-xl">
+        <h2 class="text-xs font-mono font-bold text-white uppercase">WEEK <span id="weeklyViewWeekNum">1</span> SCHEDULE</h2>
+        <div class="flex items-center gap-1">
+          <button type="button" onclick="changeActiveWeekOffset(-1)" class="min-touch px-3 py-1 bg-tn-dark border border-tn-border rounded text-xs font-mono text-tn-text">←</button>
+          <button type="button" onclick="changeActiveWeekOffset(1)" class="min-touch px-3 py-1 bg-tn-dark border border-tn-border rounded text-xs font-mono text-tn-text">→</button>
+        </div>
+      </div>
+      <div class="space-y-1.5" id="weeklyScheduleGrid">
+        <!-- Rendered by JS -->
+      </div>
+    </section>
+
+    <!-- VIEW 3: 13-WEEK MATRIX -->
+    <section id="view-matrix" class="hidden space-y-2 w-full">
+      <div class="bg-tn-card border border-tn-border p-2.5 rounded-xl flex items-center justify-between">
+        <span class="text-xs font-mono font-bold text-white uppercase">13-WEEK MASTER MATRIX</span>
+        <span class="text-[10px] font-mono text-tn-muted">Feb 7, 2027</span>
+      </div>
+      <div class="space-y-1.5" id="collapsibleMatrixContainer">
+        <!-- Rendered by JS -->
+      </div>
+    </section>
+
+    <!-- VIEW 4: TMs & SETTINGS -->
+    <section id="view-settings" class="hidden space-y-3 w-full">
+      <div class="bg-tn-card border border-tn-border rounded-xl p-3.5 space-y-3">
+        <div class="flex items-center justify-between border-b border-tn-border/60 pb-2">
+          <h2 class="text-xs font-mono font-bold text-white uppercase tracking-wider">1RM & Training Maxes (90%)</h2>
+          <button type="button" onclick="recalculateFutureLoads()" class="text-[10px] font-mono text-tn-green hover:underline">Recalc Loads</button>
+        </div>
+
+        <div class="space-y-2">
+          <div class="bg-tn-card2 p-2.5 rounded-lg border border-tn-border flex items-center justify-between gap-3">
+            <div>
+              <span class="text-xs font-mono font-bold text-white block">Barbell Press</span>
+              <span class="text-[10px] font-mono text-tn-subtext">TM: <strong id="tmDisplayPress" class="text-tn-green">--</strong></span>
+            </div>
+            <div class="flex items-center gap-1">
+              <input type="number" id="input1RMPress" step="2.5" value="175" onchange="onMaxesChanged()" class="min-touch w-20 bg-tn-dark border border-tn-border rounded px-2 py-1 text-white font-mono text-xs text-right focus:outline-none focus:border-tn-green">
+              <span class="text-[11px] font-mono text-tn-muted">lb</span>
+            </div>
+          </div>
+
+          <div class="bg-tn-card2 p-2.5 rounded-lg border border-tn-border flex items-center justify-between gap-3">
+            <div>
+              <span class="text-xs font-mono font-bold text-white block">Barbell Squat</span>
+              <span class="text-[10px] font-mono text-tn-subtext">TM: <strong id="tmDisplaySquat" class="text-tn-cyan">--</strong></span>
+            </div>
+            <div class="flex items-center gap-1">
+              <input type="number" id="input1RMSquat" step="5" value="225" onchange="onMaxesChanged()" class="min-touch w-20 bg-tn-dark border border-tn-border rounded px-2 py-1 text-white font-mono text-xs text-right focus:outline-none focus:border-tn-cyan">
+              <span class="text-[11px] font-mono text-tn-muted">lb</span>
+            </div>
+          </div>
+
+          <div class="bg-tn-card2 p-2.5 rounded-lg border border-tn-border flex items-center justify-between gap-3">
+            <div>
+              <span class="text-xs font-mono font-bold text-white block">Pull-ups (Total Load)</span>
+              <span class="text-[10px] font-mono text-tn-subtext">TM: <strong id="tmDisplayPull" class="text-tn-orange">--</strong></span>
+            </div>
+            <div class="flex items-center gap-1">
+              <input type="number" id="input1RMPull" step="2.5" value="200" onchange="onMaxesChanged()" class="min-touch w-20 bg-tn-dark border border-tn-border rounded px-2 py-1 text-white font-mono text-xs text-right focus:outline-none focus:border-tn-orange">
+              <span class="text-[11px] font-mono text-tn-muted">lb</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="pt-2 border-t border-tn-border flex items-center justify-between gap-2 font-mono text-xs">
+          <button type="button" onclick="exportData()" class="min-touch px-3 py-1.5 bg-tn-card2 rounded-lg border border-tn-border text-tn-green font-bold">Export JSON</button>
+          <label class="min-touch px-3 py-1.5 bg-tn-card2 rounded-lg border border-tn-border text-tn-subtext cursor-pointer flex items-center justify-center">
+            Import JSON
+            <input type="file" id="importFileInput" onchange="importData(event)" class="hidden" accept=".json">
+          </label>
+          <button type="button" onclick="showResetModal()" class="min-touch px-2 py-1.5 text-tn-coral hover:underline font-bold">Reset</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- INLINE RESET CONFIRMATION MODAL -->
+    <div id="resetConfirmModal" class="hidden fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4">
+      <div class="bg-tn-card border border-tn-border rounded-xl p-4 max-w-xs w-full space-y-3 font-mono text-xs">
+        <h3 class="font-bold text-tn-coral text-sm uppercase">Reset All Logs?</h3>
+        <p class="text-tn-subtext">All checked sets and logged runs will be completely reset.</p>
+        <div class="flex gap-2 justify-end pt-2">
+          <button type="button" onclick="hideResetModal()" class="min-touch px-3 py-1.5 rounded bg-tn-dark border border-tn-border text-white">Cancel</button>
+          <button type="button" onclick="executeReset()" class="min-touch px-3 py-1.5 rounded bg-tn-coral text-tn-dark font-bold">Reset</button>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- BOTTOM DOCKED REST TIMER -->
+  <aside id="stickyBottomTimer" class="fixed bottom-0 left-0 right-0 z-40 bg-tn-card/95 backdrop-blur border-t border-tn-border px-3 py-2 shadow-2xl">
+    <div class="w-full max-w-lg mx-auto flex items-center justify-between gap-2">
+      <div class="flex items-center gap-2">
+        <button type="button" onclick="toggleTimer()" id="timerStickyToggleBtn" class="min-touch w-10 h-10 rounded-lg bg-tn-green text-tn-dark flex items-center justify-center font-bold">
+          <svg id="timerIconPlay" class="w-4 h-4 ml-0.5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clip-rule="evenodd"/></svg>
+          <svg id="timerIconPause" class="w-4 h-4 hidden" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zM7 8a1 1 0 012 0v4a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v4a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd"/></svg>
+        </button>
+        <div class="text-lg font-mono font-extrabold text-white" id="timerDigitalDisplay">02:00</div>
+      </div>
+
+      <div class="flex items-center gap-1 font-mono text-xs" id="timerPresetsContainer">
+        <button type="button" onclick="setTimerPreset(60)" class="min-touch px-2 py-1 rounded bg-tn-card2 text-tn-subtext border border-tn-border">60s</button>
+        <button type="button" onclick="setTimerPreset(90)" class="min-touch px-2 py-1 rounded bg-tn-card2 text-tn-subtext border border-tn-border">90s</button>
+        <button type="button" onclick="setTimerPreset(120)" class="min-touch px-2 py-1 rounded bg-tn-green/20 text-tn-green font-bold border border-tn-green/40">120s</button>
+        <button type="button" onclick="setTimerPreset(180)" class="min-touch px-2 py-1 rounded bg-tn-card2 text-tn-subtext border border-tn-border">180s</button>
+      </div>
+
+      <button type="button" onclick="resetTimer()" class="min-touch px-2 py-1 text-[11px] font-mono text-tn-muted hover:text-white">Reset</button>
+    </div>
+  </aside>
+
+  <script>
+    // --- PROTOCOL SPECIFICATION ---
+    const TARGET_DATE = new Date("2027-02-07T07:00:00");
+    const STORAGE_KEY = "tb_fighter_green_state";
+
+    const WEEKS_DATA = [
+      { week: 1, dates: "Nov 9–15", pct: 0.75, reps: 5, sets: 3, friQuality: "4x800m Repeats (400m jog recovery)", satLongRun: "60m Zone 2 Run", pressOffset: 0, squatOffset: 0 },
+      { week: 2, dates: "Nov 16–22", pct: 0.80, reps: 4, sets: 3, friQuality: "Tempo: 1 mi warm-up + 3 mi @ 8:55 + 1 mi cool-down", satLongRun: "65m Zone 2 Run", pressOffset: 0, squatOffset: 0 },
+      { week: 3, dates: "Nov 23–29", pct: 0.85, reps: 4, sets: 3, friQuality: "5x800m Repeats (400m jog recovery)", satLongRun: "70m Zone 2 Run", pressOffset: 0, squatOffset: 0 },
+      { week: 4, dates: "Nov 30–Dec 6", pct: 0.75, reps: 5, sets: 3, friQuality: "20m Flat Jog (Deload)", satLongRun: "40m Cutback Run (Deload)", pressOffset: 0, squatOffset: 0 },
+      { week: 5, dates: "Dec 7–13", pct: 0.80, reps: 4, sets: 3, friQuality: "Tempo: 1 mi warm-up + 4.5 mi @ 8:50 + 1 mi cool-down", satLongRun: "75m Zone 2 Run", pressOffset: 0, squatOffset: 0 },
+      { week: 6, dates: "Dec 14–20", pct: 0.85, reps: 4, sets: 3, friQuality: "5x800m Repeats (400m jog recovery)", satLongRun: "80m Zone 2 Run", pressOffset: 0, squatOffset: 0 },
+      { week: 7, dates: "Dec 21–27", pct: 0.75, reps: 5, sets: 3, friQuality: "Tempo: 1 mi warm-up + 5 mi @ 8:50 + 1 mi cool-down", satLongRun: "75m Zone 2 Run", pressOffset: 5, squatOffset: 10 },
+      { week: 8, dates: "Dec 28–Jan 3", pct: 0.80, reps: 4, sets: 3, friQuality: "20m Flat Jog (Deload)", satLongRun: "45m Cutback Run (Deload)", pressOffset: 5, squatOffset: 10 },
+      { week: 9, dates: "Jan 4–10", pct: 0.85, reps: 4, sets: 3, friQuality: "6x800m Repeats (400m jog recovery)", satLongRun: "85m Zone 2 Run", pressOffset: 5, squatOffset: 10 },
+      { week: 10, dates: "Jan 11–17", pct: 0.75, reps: 5, sets: 3, friQuality: "Tempo: 1 mi warm-up + 5.5 mi @ 8:50 + 1 mi cool-down", satLongRun: "Peak Long Run: 90m Zone 2", pressOffset: 5, squatOffset: 10 },
+      { week: 11, dates: "Jan 18–24", pct: 0.80, reps: 4, sets: 3, friQuality: "6x800m Repeats (400m jog recovery)", satLongRun: "65m Cutback Run", pressOffset: 5, squatOffset: 10 },
+      { week: 12, dates: "Jan 25–31", pct: 0.85, reps: 4, sets: 3, friQuality: "3 mi easy flat + 4x100m strides (Taper)", satLongRun: "40m Easy Flat Run (Taper)", pressOffset: 5, squatOffset: 10 },
+      { week: 13, dates: "Feb 1–7", pct: 0.70, reps: 6, sets: 2, friQuality: "Rest", satLongRun: "Rest", pressOffset: 5, squatOffset: 10 }
+    ];
+
+    const DAYS_CONFIG = [
+      { id: 'mon', short: 'MON', name: 'Monday', desc: 'Barbell Press, Barbell Squat, Pull-ups + Carries + 20m Flush' },
+      { id: 'tue', short: 'TUE', name: 'Tuesday', desc: '45–60m Zone 2 Run' },
+      { id: 'wed', short: 'WED', name: 'Wednesday', desc: 'Protected Rest' },
+      { id: 'thu', short: 'THU', name: 'Thursday', desc: 'Barbell Press, Barbell Squat, Pull-ups + Carries + 20m Flush' },
+      { id: 'fri', short: 'FRI', name: 'Friday', desc: 'Quality Run' },
+      { id: 'sat', short: 'SAT', name: 'Saturday', desc: 'Zone 2 Long Run' },
+      { id: 'sun', short: 'SUN', name: 'Sunday', desc: 'Rest' }
+    ];
+
+    function roundToNearest2p5(val) {
+      return (Math.round(val / 2.5) * 2.5);
+    }
+
+    function computeWeekLoads(weekNum, tms) {
+      const wk = WEEKS_DATA.find(x => x.week === weekNum);
+      const pressTM = tms.press + wk.pressOffset;
+      const squatTM = tms.squat + wk.squatOffset;
+      const pullTM = tms.pull + wk.pressOffset;
+
+      return {
+        press: roundToNearest2p5(pressTM * wk.pct),
+        squat: roundToNearest2p5(squatTM * wk.pct),
+        pull: roundToNearest2p5(pullTM * wk.pct)
+      };
+    }
+
+    function createDefaultState() {
+      const state = {
+        version: 1,
+        settings: {
+          active_week: 1,
+          active_day: "mon"
+        },
+        maxes: { press: 175, squat: 225, pull: 200 },
+        tms: {
+          press: roundToNearest2p5(175 * 0.90),
+          squat: roundToNearest2p5(225 * 0.90),
+          pull: roundToNearest2p5(200 * 0.90)
+        },
+        weeks: {}
+      };
+
+      for (let w = 1; w <= 13; w++) {
+        state.weeks[w] = {
+          loads: computeWeekLoads(w, state.tms),
+          logged: {
+            mon: { press: [false, false, false], squat: [false, false, false], pull: [false, false, false], carries: [false, false, false], flush: false, completed: false },
+            tue: { run: false, completed: false },
+            wed: { completed: false },
+            thu: { press: [false, false, false], squat: [false, false, false], pull: [false, false, false], carries: [false, false, false], flush: false, completed: false },
+            fri: { quality: false, completed: false },
+            sat: { lr: false, completed: false },
+            sun: { completed: false }
+          }
+        };
+        if (w === 13) {
+          state.weeks[w].logged.mon = { press: [false, false], squat: [false, false], pull: [false, false], carries: [false, false, false], flush: false, completed: false };
+          state.weeks[w].logged.tue = { flush: false, completed: false };
+          state.weeks[w].logged.sun = { race: false, completed: false };
+        }
+      }
+      return state;
+    }
+
+    let appState = createDefaultState();
+
+    function loadState() {
+      try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if (raw) {
+          const parsed = JSON.parse(raw);
+          if (parsed && parsed.weeks && parsed.maxes && parsed.tms) {
+            appState = parsed;
+          }
+        }
+      } catch (e) {
+        console.error("State parse error:", e);
+      }
+      // Ensure all weeks and days are initialized
+      for (let w = 1; w <= 13; w++) {
+        if (!appState.weeks[w]) {
+          appState.weeks[w] = {
+            loads: computeWeekLoads(w, appState.tms),
+            logged: {
+              mon: { press: [false, false, false], squat: [false, false, false], pull: [false, false, false], carries: [false, false, false], flush: false, completed: false },
+              tue: { run: false, completed: false },
+              wed: { completed: false },
+              thu: { press: [false, false, false], squat: [false, false, false], pull: [false, false, false], carries: [false, false, false], flush: false, completed: false },
+              fri: { quality: false, completed: false },
+              sat: { lr: false, completed: false },
+              sun: { completed: false }
+            }
+          };
+        }
+      }
+    }
+
+    function saveState() {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(appState));
+    }
+
+    // --- AUDIO & HAPTICS ---
+    let audioCtx = null;
+    function getAudioCtx() {
+      if (!audioCtx) {
+        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      }
+      if (audioCtx.state === 'suspended') {
+        audioCtx.resume();
+      }
+      return audioCtx;
+    }
+
+    function playBeep(freq = 784, duration = 0.05) {
+      try {
+        const ctx = getAudioCtx();
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(freq, ctx.currentTime);
+        gain.gain.setValueAtTime(0.12, ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + duration);
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start();
+        osc.stop(ctx.currentTime + duration);
+      } catch (e) {}
+    }
+
+    function triggerHaptic(duration = 20) {
+      if (navigator.vibrate) {
+        try { navigator.vibrate(duration); } catch(e) {}
+      }
+    }
+
+    // --- NAVIGATION ---
+    function switchView(viewName) {
+      ['today', 'weekly', 'matrix', 'settings'].forEach(v => {
+        const sec = document.getElementById(`view-${v}`);
+        const tab = document.getElementById(`tab-${v}`);
+        if (v === viewName) {
+          sec.classList.remove('hidden');
+          tab.className = "flex-1 py-2 text-center border-b-2 font-medium transition-colors border-tn-green text-tn-green font-bold";
+        } else {
+          sec.classList.add('hidden');
+          tab.className = "flex-1 py-2 text-center border-b-2 font-medium transition-colors border-transparent text-tn-subtext";
+        }
+      });
+      triggerHaptic(15);
+      if (viewName === 'weekly') renderWeeklyGrid();
+      if (viewName === 'matrix') renderMatrixView();
+      if (viewName === 'today') renderExecutionDashboard();
+    }
+
+    // --- TM & SETTINGS LOGIC ---
+    function updateTMDisplays() {
+      document.getElementById('tmDisplayPress').innerText = `${appState.tms.press} lb`;
+      document.getElementById('tmDisplaySquat').innerText = `${appState.tms.squat} lb`;
+      document.getElementById('tmDisplayPull').innerText = `${appState.tms.pull} lb`;
+    }
+
+    function onMaxesChanged() {
+      const p = parseFloat(document.getElementById('input1RMPress').value) || 175;
+      const s = parseFloat(document.getElementById('input1RMSquat').value) || 225;
+      const pu = parseFloat(document.getElementById('input1RMPull').value) || 200;
+
+      appState.maxes.press = p;
+      appState.maxes.squat = s;
+      appState.maxes.pull = pu;
+
+      appState.tms.press = roundToNearest2p5(p * 0.90);
+      appState.tms.squat = roundToNearest2p5(s * 0.90);
+      appState.tms.pull = roundToNearest2p5(pu * 0.90);
+
+      updateTMDisplays();
+
+      // Recalculate future uncompleted weeks only, keeping completed historical weeks frozen
+      const curW = appState.settings.active_week || 1;
+      for (let w = curW; w <= 13; w++) {
+        let isPastLogged = false;
+        const loggedObj = appState.weeks[w].logged;
+        for (let day in loggedObj) {
+          if (loggedObj[day] && loggedObj[day].completed) isPastLogged = true;
+        }
+        if (!isPastLogged) {
+          appState.weeks[w].loads = computeWeekLoads(w, appState.tms);
+        }
+      }
+
+      saveState();
+      renderExecutionDashboard();
+      renderWeeklyGrid();
+      renderMatrixView();
+    }
+
+    function recalculateFutureLoads() {
+      const curW = appState.settings.active_week || 1;
+      for (let w = curW; w <= 13; w++) {
+        appState.weeks[w].loads = computeWeekLoads(w, appState.tms);
+      }
+      saveState();
+      renderExecutionDashboard();
+      renderWeeklyGrid();
+      renderMatrixView();
+      triggerHaptic(25);
+      playBeep(880, 0.08);
+    }
+
+    // --- CHECKLIST & SET LOGGING ---
+    function toggleExerciseSet(w, dayId, exercise, setIndex) {
+      const wkLogged = appState.weeks[w].logged[dayId];
+      if (!wkLogged || !wkLogged[exercise]) return;
+
+      wkLogged[exercise][setIndex] = !wkLogged[exercise][setIndex];
+      checkDayCompletionStatus(w, dayId);
+
+      triggerHaptic(20);
+      playBeep(wkLogged[exercise][setIndex] ? 784 : 440, 0.05);
+
+      saveState();
+      renderExecutionDashboard();
+      renderWeeklyGrid();
+      updateGlobalProgress();
+    }
+
+    function toggleCarryRound(w, dayId, roundIndex) {
+      const wkLogged = appState.weeks[w].logged[dayId];
+      if (!wkLogged || !wkLogged.carries) return;
+
+      wkLogged.carries[roundIndex] = !wkLogged.carries[roundIndex];
+      checkDayCompletionStatus(w, dayId);
+
+      triggerHaptic(20);
+      playBeep(wkLogged.carries[roundIndex] ? 784 : 440, 0.05);
+
+      saveState();
+      renderExecutionDashboard();
+      renderWeeklyGrid();
+      updateGlobalProgress();
+    }
+
+    function toggleGenericItem(w, dayId, itemKey) {
+      const wkLogged = appState.weeks[w].logged[dayId];
+      if (!wkLogged) return;
+
+      wkLogged[itemKey] = !wkLogged[itemKey];
+      checkDayCompletionStatus(w, dayId);
+
+      triggerHaptic(20);
+      playBeep(wkLogged[itemKey] ? 784 : 440, 0.05);
+
+      saveState();
+      renderExecutionDashboard();
+      renderWeeklyGrid();
+      updateGlobalProgress();
+    }
+
+    function checkDayCompletionStatus(w, dayId) {
+      const wkLogged = appState.weeks[w].logged[dayId];
+      if (!wkLogged) return;
+
+      if (w === 13) {
+        if (dayId === 'mon') {
+          const pressDone = wkLogged.press.every(Boolean);
+          const squatDone = wkLogged.squat.every(Boolean);
+          const pullDone = wkLogged.pull.every(Boolean);
+          const carriesDone = wkLogged.carries.every(Boolean);
+          wkLogged.completed = pressDone && squatDone && pullDone && carriesDone;
+        } else if (dayId === 'tue') {
+          wkLogged.completed = !!wkLogged.flush;
+        } else if (dayId === 'sun') {
+          wkLogged.completed = !!wkLogged.race;
+        } else {
+          wkLogged.completed = !!wkLogged.completed;
+        }
+      } else {
+        if (dayId === 'mon' || dayId === 'thu') {
+          const pressDone = wkLogged.press.every(Boolean);
+          const squatDone = wkLogged.squat.every(Boolean);
+          const pullDone = wkLogged.pull.every(Boolean);
+          const carriesDone = wkLogged.carries.every(Boolean);
+          const flushDone = !!wkLogged.flush;
+          wkLogged.completed = pressDone && squatDone && pullDone && carriesDone && flushDone;
+        } else if (dayId === 'tue') {
+          wkLogged.completed = !!wkLogged.run;
+        } else if (dayId === 'fri') {
+          wkLogged.completed = !!wkLogged.quality;
+        } else if (dayId === 'sat') {
+          wkLogged.completed = !!wkLogged.lr;
+        } else if (dayId === 'wed' || dayId === 'sun') {
+          wkLogged.completed = !!wkLogged.completed;
+        }
+      }
+    }
+
+    function toggleEntireDay() {
+      const w = appState.settings.active_week;
+      const dayId = appState.settings.active_day;
+      const wkLogged = appState.weeks[w].logged[dayId];
+      if (!wkLogged) return;
+
+      const target = !wkLogged.completed;
+
+      if (w === 13) {
+        if (dayId === 'mon') {
+          wkLogged.press = wkLogged.press.map(() => target);
+          wkLogged.squat = wkLogged.squat.map(() => target);
+          wkLogged.pull = wkLogged.pull.map(() => target);
+          wkLogged.carries = wkLogged.carries.map(() => target);
+        } else if (dayId === 'tue') {
+          wkLogged.flush = target;
+        } else if (dayId === 'sun') {
+          wkLogged.race = target;
+        }
+      } else {
+        if (dayId === 'mon' || dayId === 'thu') {
+          wkLogged.press = wkLogged.press.map(() => target);
+          wkLogged.squat = wkLogged.squat.map(() => target);
+          wkLogged.pull = wkLogged.pull.map(() => target);
+          wkLogged.carries = wkLogged.carries.map(() => target);
+          wkLogged.flush = target;
+        } else if (dayId === 'tue') {
+          wkLogged.run = target;
+        } else if (dayId === 'fri') {
+          wkLogged.quality = target;
+        } else if (dayId === 'sat') {
+          wkLogged.lr = target;
+        }
+      }
+
+      wkLogged.completed = target;
+
+      triggerHaptic(target ? 30 : 20);
+      playBeep(target ? 880 : 440, 0.08);
+
+      saveState();
+      renderExecutionDashboard();
+      renderWeeklyGrid();
+      updateGlobalProgress();
+    }
+
+    // --- UI RENDERING ---
+    function renderExecutionDashboard() {
+      const w = appState.settings.active_week;
+      const dayId = appState.settings.active_day;
+      const currentWk = WEEKS_DATA.find(x => x.week === w);
+      const currentDay = DAYS_CONFIG.find(x => x.id === dayId);
+      const wkData = appState.weeks[w];
+      const wkLogged = wkData.logged[dayId];
+      const loads = wkData.loads;
+
+      document.getElementById('dayHeaderDay').innerText = currentDay.name;
+
+      let subtitle = currentDay.desc;
+      if (w === 13) {
+        if (dayId === 'mon') subtitle = "Barbell Press, Barbell Squat, Pull-ups (2×6 @ 70%) + Carries";
+        if (dayId === 'tue') subtitle = "30m Flush Run";
+        if (dayId === 'thu' || dayId === 'fri' || dayId === 'sat') subtitle = "Protected Rest";
+        if (dayId === 'sun') subtitle = "Surf City Half-Marathon (13.1 mi)";
+      }
+      document.getElementById('dayHeaderSubtitle').innerText = subtitle;
+
+      // Complete Day button
+      const dayDone = !!wkLogged.completed;
+      const completeBtn = document.getElementById('dayCompleteBtn');
+      if (dayDone) {
+        completeBtn.className = "min-touch px-3 py-1.5 rounded-lg border text-xs font-mono font-bold bg-tn-green/20 border-tn-green text-tn-green";
+        completeBtn.innerHTML = `✓ Done`;
+      } else {
+        completeBtn.className = "min-touch px-3 py-1.5 rounded-lg border text-xs font-mono font-bold bg-tn-dark border-tn-border text-tn-subtext";
+        completeBtn.innerHTML = `Log Day`;
+      }
+
+      const container = document.getElementById('dayExecutionDetails');
+      container.innerHTML = '';
+
+      // WEEK 13 SPECIALS
+      if (w === 13) {
+        if (dayId === 'mon') {
+          renderLiftingCards(container, w, dayId, loads, 2, 6);
+          renderCarryCards(container, w, dayId);
+        } else if (dayId === 'tue') {
+          const done = !!wkLogged.flush;
+          container.innerHTML = `
+            <button type="button" onclick="toggleGenericItem(${w}, '${dayId}', 'flush')" class="min-touch w-full p-3 rounded-lg border text-xs font-mono font-bold flex items-center justify-between transition ${done ? 'bg-tn-green/20 border-tn-green text-tn-green' : 'bg-tn-card2 border-tn-border text-tn-text'}">
+              <span>30m Flush Run</span>
+              <span class="text-sm">${done ? '✓' : 'Log'}</span>
+            </button>
+          `;
+        } else if (dayId === 'sun') {
+          const done = !!wkLogged.race;
+          container.innerHTML = `
+            <button type="button" onclick="toggleGenericItem(${w}, '${dayId}', 'race')" class="min-touch w-full p-4 rounded-xl border text-sm font-mono font-bold flex items-center justify-center transition ${done ? 'bg-tn-green border-tn-green text-tn-dark font-black' : 'bg-tn-card2 border-tn-green text-tn-green'}">
+              ${done ? '✓ SURF CITY HALF MARATHON COMPLETE' : 'SURF CITY HALF MARATHON (13.1 mi)'}
+            </button>
+          `;
+        } else {
+          const done = !!wkLogged.completed;
+          container.innerHTML = `
+            <button type="button" onclick="toggleGenericItem(${w}, '${dayId}', 'completed')" class="min-touch w-full p-3 rounded-lg border text-xs font-mono font-bold flex items-center justify-center transition ${done ? 'bg-tn-green/20 border-tn-green text-tn-green' : 'bg-tn-card2 border-tn-border text-tn-subtext'}">
+              ${done ? '✓ Rest' : 'Confirm Rest'}
+            </button>
+          `;
+        }
+        renderDayButtons();
+        return;
+      }
+
+      // WEEKS 1–12
+      if (dayId === 'mon' || dayId === 'thu') {
+        renderLiftingCards(container, w, dayId, loads, currentWk.sets, currentWk.reps);
+        renderCarryCards(container, w, dayId);
+
+        // 20m Flush Run Button
+        const flushDone = !!wkLogged.flush;
+        const flushBtn = document.createElement('button');
+        flushBtn.type = "button";
+        flushBtn.onclick = () => toggleGenericItem(w, dayId, 'flush');
+        flushBtn.className = `min-touch w-full p-2.5 rounded-lg border text-xs font-mono font-bold flex items-center justify-between transition ${flushDone ? 'bg-tn-green/20 border-tn-green text-tn-green' : 'bg-tn-card2 border-tn-border text-tn-subtext'}`;
+        flushBtn.innerHTML = `<span>20m Flush Run</span><span class="text-sm">${flushDone ? '✓' : 'Log'}</span>`;
+        container.appendChild(flushBtn);
+
+      } else if (dayId === 'tue') {
+        const done = !!wkLogged.run;
+        container.innerHTML = `
+          <button type="button" onclick="toggleGenericItem(${w}, '${dayId}', 'run')" class="min-touch w-full p-3 rounded-lg border text-xs font-mono font-bold flex items-center justify-between transition ${done ? 'bg-tn-green/20 border-tn-green text-tn-green' : 'bg-tn-card2 border-tn-border text-tn-text'}">
+            <span>45–60m Zone 2 Run</span>
+            <span class="text-sm">${done ? '✓' : 'Log'}</span>
+          </button>
+        `;
+      } else if (dayId === 'wed' || dayId === 'sun') {
+        const done = !!wkLogged.completed;
+        const label = dayId === 'wed' ? 'Protected Rest' : 'Rest Buffer';
+        container.innerHTML = `
+          <button type="button" onclick="toggleGenericItem(${w}, '${dayId}', 'completed')" class="min-touch w-full p-3 rounded-lg border text-xs font-mono font-bold flex items-center justify-center transition ${done ? 'bg-tn-green/20 border-tn-green text-tn-green' : 'bg-tn-card2 border-tn-border text-tn-subtext'}">
+            ${done ? `✓ ${label}` : `Confirm ${label}`}
+          </button>
+        `;
+      } else if (dayId === 'fri') {
+        const done = !!wkLogged.quality;
+        container.innerHTML = `
+          <button type="button" onclick="toggleGenericItem(${w}, '${dayId}', 'quality')" class="min-touch w-full p-3 rounded-lg border text-xs font-mono font-bold flex items-center justify-between text-left gap-2 transition ${done ? 'bg-tn-green/20 border-tn-green text-tn-green' : 'bg-tn-card2 border-tn-border text-tn-text'}">
+            <span>${currentWk.friQuality}</span>
+            <span class="text-sm shrink-0">${done ? '✓' : 'Log'}</span>
+          </button>
+        `;
+      } else if (dayId === 'sat') {
+        const done = !!wkLogged.lr;
+        container.innerHTML = `
+          <button type="button" onclick="toggleGenericItem(${w}, '${dayId}', 'lr')" class="min-touch w-full p-3 rounded-lg border text-xs font-mono font-bold flex items-center justify-between transition ${done ? 'bg-tn-green/20 border-tn-green text-tn-green' : 'bg-tn-card2 border-tn-border text-tn-text'}">
+            <span>${currentWk.satLongRun}</span>
+            <span class="text-sm shrink-0">${done ? '✓' : 'Log'}</span>
+          </button>
+        `;
+      }
+
+      renderDayButtons();
+    }
+
+    function renderLiftingCards(container, w, dayId, loads, sets, reps) {
+      const wkLogged = appState.weeks[w].logged[dayId];
+      const lifts = [
+        { key: 'press', name: 'Barbell Press', load: loads.press, color: 'text-tn-green' },
+        { key: 'squat', name: 'Barbell Squat', load: loads.squat, color: 'text-tn-cyan' },
+        { key: 'pull', name: 'Pull-ups', load: loads.pull, color: 'text-tn-orange' }
+      ];
+
+      lifts.forEach(lift => {
+        const card = document.createElement('div');
+        card.className = "bg-tn-card2 border border-tn-border rounded-lg p-2.5";
+
+        let html = `
+          <div class="flex items-center justify-between border-b border-tn-border/60 pb-1 mb-2">
+            <span class="font-bold text-white text-xs">${lift.name}</span>
+            <span class="text-xs font-mono font-bold ${lift.color}">${lift.load} lb</span>
+          </div>
+          <div class="grid grid-cols-${sets} gap-2 text-xs font-mono">
+        `;
+
+        for (let s = 0; s < sets; s++) {
+          const checked = !!wkLogged[lift.key][s];
+          html += `
+            <button type="button" onclick="toggleExerciseSet(${w}, '${dayId}', '${lift.key}', ${s})" class="min-touch rounded-lg border flex items-center justify-center font-mono font-bold text-base transition active:scale-95 ${checked ? 'bg-tn-green border-tn-green text-tn-dark font-black' : 'bg-tn-dark border-tn-border text-white'}">
+              ${checked ? '✓' : reps}
+            </button>
+          `;
+        }
+        html += `</div>`;
+        card.innerHTML = html;
+        container.appendChild(card);
+      });
+    }
+
+    function renderCarryCards(container, w, dayId) {
+      const wkLogged = appState.weeks[w].logged[dayId];
+      const card = document.createElement('div');
+      card.className = "bg-tn-card2 border border-tn-border rounded-lg p-2.5";
+
+      let html = `
+        <div class="flex items-center justify-between border-b border-tn-border/60 pb-1 mb-2">
+          <span class="font-bold text-white text-xs">Double Suitcase Carry</span>
+          <span class="text-[10px] font-mono text-tn-subtext">3 × 40–50 yds</span>
+        </div>
+        <div class="grid grid-cols-3 gap-2 text-xs font-mono">
+      `;
+
+      for (let r = 0; r < 3; r++) {
+        const checked = !!wkLogged.carries[r];
+        html += `
+          <button type="button" onclick="toggleCarryRound(${w}, '${dayId}', ${r})" class="min-touch rounded-lg border flex items-center justify-center font-mono font-bold text-sm transition active:scale-95 ${checked ? 'bg-tn-green border-tn-green text-tn-dark font-black' : 'bg-tn-dark border-tn-border text-white'}">
+            ${checked ? '✓' : `R${r+1}`}
+          </button>
+        `;
+      }
+      html += `</div>`;
+      card.innerHTML = html;
+      container.appendChild(card);
+    }
+
+    function renderDayButtons() {
+      const container = document.getElementById('dayButtonsContainer');
+      const w = appState.settings.active_week;
+      let html = '';
+
+      DAYS_CONFIG.forEach(d => {
+        const isSelected = d.id === appState.settings.active_day;
+        const wkLogged = appState.weeks[w].logged[d.id];
+        const isDone = wkLogged && wkLogged.completed;
+
+        let borderClass = isSelected 
+          ? 'border-tn-green text-tn-green font-bold bg-tn-card2 shadow-sm' 
+          : 'border-transparent text-tn-subtext bg-transparent';
+        if (isDone) borderClass += ' text-tn-green';
+
+        html += `
+          <button type="button" onclick="setActiveDay('${d.id}')" class="min-touch flex-1 py-1.5 text-xs font-mono rounded border transition flex items-center justify-center gap-0.5 ${borderClass}">
+            <span>${d.short}</span>
+            ${isDone ? '<span class="text-tn-green text-[10px]">✓</span>' : ''}
+          </button>
+        `;
+      });
+
+      container.innerHTML = html;
+    }
+
+    function setActiveDay(dId) {
+      appState.settings.active_day = dId;
+      triggerHaptic(15);
+      saveState();
+      renderExecutionDashboard();
+    }
+
+    function onWeekChange(val) {
+      appState.settings.active_week = parseInt(val, 10);
+      triggerHaptic(15);
+      saveState();
+      renderExecutionDashboard();
+      renderWeeklyGrid();
+    }
+
+    function changeActiveWeekOffset(delta) {
+      let newW = appState.settings.active_week + delta;
+      if (newW < 1) newW = 1;
+      if (newW > 13) newW = 13;
+      appState.settings.active_week = newW;
+      document.getElementById('weekSelect').value = newW;
+      saveState();
+      renderExecutionDashboard();
+      renderWeeklyGrid();
+    }
+
+    function renderWeeklyGrid() {
+      const w = appState.settings.active_week;
+      const wk = WEEKS_DATA.find(x => x.week === w);
+      document.getElementById('weeklyViewWeekNum').innerText = w;
+
+      const container = document.getElementById('weeklyScheduleGrid');
+      let html = '';
+
+      DAYS_CONFIG.forEach(d => {
+        const wkLogged = appState.weeks[w].logged[d.id];
+        const done = wkLogged && wkLogged.completed;
+        let contentDesc = '';
+
+        if (w === 13) {
+          if (d.id === 'mon') contentDesc = "Fighter (2×6 @ 70%) + Carries";
+          else if (d.id === 'tue') contentDesc = "30m Flush Run";
+          else if (d.id === 'sun') contentDesc = "Surf City Half-Marathon (13.1 mi)";
+          else contentDesc = "Protected Rest";
+        } else {
+          if (d.id === 'mon' || d.id === 'thu') {
+            contentDesc = `Fighter (${wk.sets}×${wk.reps} @ ${Math.round(wk.pct*100)}%) + Carries + 20m Flush`;
+          } else if (d.id === 'tue') {
+            contentDesc = `45–60m Easy Road Run`;
+          } else if (d.id === 'wed') {
+            contentDesc = `Protected Rest`;
+          } else if (d.id === 'fri') {
+            contentDesc = wk.friQuality;
+          } else if (d.id === 'sat') {
+            contentDesc = wk.satLongRun;
+          } else if (d.id === 'sun') {
+            contentDesc = `Rest Buffer`;
+          }
+        }
+
+        html += `
+          <div onclick="selectDayFromWeekly('${d.id}')" class="min-touch bg-tn-card border ${done ? 'border-tn-green/60 bg-tn-card2' : 'border-tn-border'} rounded-lg p-2.5 flex items-center justify-between text-xs font-mono cursor-pointer">
+            <div>
+              <span class="font-bold text-white mr-2">${d.short}</span>
+              <span class="text-tn-subtext text-[11px]">${contentDesc}</span>
+            </div>
+            <span class="text-xs px-1 ${done ? 'text-tn-green font-bold' : 'text-tn-muted'}">${done ? '✓' : '→'}</span>
+          </div>
+        `;
+      });
+
+      container.innerHTML = html;
+    }
+
+    function selectDayFromWeekly(dId) {
+      appState.settings.active_day = dId;
+      switchView('today');
+    }
+
+    let expandedMatrixWeeks = { 1: true };
+
+    function renderMatrixView() {
+      const container = document.getElementById('collapsibleMatrixContainer');
+      let html = '';
+
+      WEEKS_DATA.forEach(w => {
+        const wkData = appState.weeks[w.week];
+        let daysDone = 0;
+        if (wkData && wkData.logged) {
+          for (let d in wkData.logged) {
+            if (wkData.logged[d] && wkData.logged[d].completed) daysDone++;
+          }
+        }
+        const isCurrent = w.week === appState.settings.active_week;
+        const isExpanded = !!expandedMatrixWeeks[w.week];
+        const loads = wkData.loads;
+
+        html += `
+          <div class="bg-tn-card border ${isCurrent ? 'border-tn-green/60' : 'border-tn-border'} rounded-lg overflow-hidden text-xs font-mono">
+            <div onclick="toggleWeekCollapse(${w.week})" class="p-2.5 bg-tn-card2 flex items-center justify-between cursor-pointer">
+              <div class="flex items-center gap-2">
+                <span class="font-bold text-white">W${w.week}</span>
+                <span class="text-[10px] text-tn-subtext">${w.dates}</span>
+                ${(w.week === 4 || w.week === 8) ? '<span class="text-[9px] px-1 py-0.2 bg-tn-orange/20 text-tn-orange rounded">DELOAD</span>' : ''}
+                ${(w.week === 12 || w.week === 13) ? '<span class="text-[9px] px-1 py-0.2 bg-tn-cyan/20 text-tn-cyan rounded">TAPER</span>' : ''}
+              </div>
+              <div class="flex items-center gap-2">
+                <span class="text-[11px] ${daysDone === 7 ? 'text-tn-green font-bold' : 'text-tn-muted'}">${daysDone}/7</span>
+                <span class="text-tn-muted">${isExpanded ? '▲' : '▼'}</span>
+              </div>
+            </div>
+
+            ${isExpanded ? `
+              <div class="p-2.5 border-t border-tn-border/60 space-y-1 bg-tn-card text-[11px]">
+                <div class="flex justify-between text-tn-subtext">
+                  <span class="text-tn-muted">LIFT:</span>
+                  <span class="text-tn-green font-bold">${w.sets}×${w.reps} @ ${Math.round(w.pct*100)}% (P: ${loads.press} / S: ${loads.squat} / PU: ${loads.pull})</span>
+                </div>
+                <div class="text-tn-subtext"><span class="text-tn-muted">FRI:</span> ${w.friQuality}</div>
+                <div class="text-tn-subtext"><span class="text-tn-muted">SAT:</span> ${w.satLongRun}</div>
+                <div class="pt-1 text-right">
+                  <button type="button" onclick="jumpToWeek(${w.week})" class="text-tn-green hover:underline">Select Week →</button>
+                </div>
+              </div>
+            ` : ''}
+          </div>
+        `;
+      });
+
+      container.innerHTML = html;
+    }
+
+    function toggleWeekCollapse(w) {
+      expandedMatrixWeeks[w] = !expandedMatrixWeeks[w];
+      renderMatrixView();
+    }
+
+    function jumpToWeek(w) {
+      appState.settings.active_week = w;
+      document.getElementById('weekSelect').value = w;
+      saveState();
+      switchView('today');
+    }
+
+    function updateGlobalProgress() {
+      let totalDays = 13 * 7;
+      let completedCount = 0;
+      for (let w = 1; w <= 13; w++) {
+        const wk = appState.weeks[w];
+        if (wk && wk.logged) {
+          for (let d in wk.logged) {
+            if (wk.logged[d] && wk.logged[d].completed) completedCount++;
+          }
+        }
+      }
+      const pct = Math.round((completedCount / totalDays) * 100);
+      document.getElementById('globalProgressPercent').innerText = `${pct}%`;
+    }
+
+    // --- REST TIMER IMPLEMENTATION ---
+    let timerDuration = 120;
+    let timerRemaining = 120;
+    let timerInterval = null;
+
+    function formatTime(sec) {
+      const m = Math.floor(sec / 60);
+      const s = sec % 60;
+      return `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+    }
+
+    function updateTimerDisplay() {
+      document.getElementById('timerDigitalDisplay').innerText = formatTime(timerRemaining);
+    }
+
+    function setTimerPreset(seconds) {
+      clearInterval(timerInterval);
+      timerInterval = null;
+      timerDuration = seconds;
+      timerRemaining = seconds;
+      updateTimerDisplay();
+      document.getElementById('timerIconPlay').classList.remove('hidden');
+      document.getElementById('timerIconPause').classList.add('hidden');
+
+      const presetButtons = document.querySelectorAll('#timerPresetsContainer button');
+      presetButtons.forEach(btn => {
+        if (btn.innerText === `${seconds}s`) {
+          btn.className = "min-touch px-2 py-1 rounded bg-tn-green/20 text-tn-green font-bold border border-tn-green/40";
+        } else {
+          btn.className = "min-touch px-2 py-1 rounded bg-tn-card2 text-tn-subtext border border-tn-border";
+        }
+      });
+      triggerHaptic(15);
+    }
+
+    function toggleTimer() {
+      if (timerInterval) {
+        clearInterval(timerInterval);
+        timerInterval = null;
+        document.getElementById('timerIconPlay').classList.remove('hidden');
+        document.getElementById('timerIconPause').classList.add('hidden');
+      } else {
+        getAudioCtx();
+        if (timerRemaining <= 0) timerRemaining = timerDuration;
+        document.getElementById('timerIconPlay').classList.add('hidden');
+        document.getElementById('timerIconPause').classList.remove('hidden');
+
+        timerInterval = setInterval(() => {
+          timerRemaining--;
+          updateTimerDisplay();
+          if (timerRemaining <= 0) {
+            clearInterval(timerInterval);
+            timerInterval = null;
+            document.getElementById('timerIconPlay').classList.remove('hidden');
+            document.getElementById('timerIconPause').classList.add('hidden');
+            playBeep(880, 0.25);
+            triggerHaptic(80);
+          }
+        }, 1000);
+      }
+      triggerHaptic(15);
+    }
+
+    function resetTimer() {
+      clearInterval(timerInterval);
+      timerInterval = null;
+      timerRemaining = timerDuration;
+      updateTimerDisplay();
+      document.getElementById('timerIconPlay').classList.remove('hidden');
+      document.getElementById('timerIconPause').classList.add('hidden');
+      triggerHaptic(15);
+    }
+
+    // --- WAKE LOCK ---
+    let wakeLockSentinel = null;
+    async function toggleWakeLock() {
+      if ('wakeLock' in navigator) {
+        try {
+          if (!wakeLockSentinel) {
+            wakeLockSentinel = await navigator.wakeLock.request('screen');
+            document.getElementById('wakeLockIndicator').className = "w-1.5 h-1.5 rounded-full bg-tn-green";
+            document.getElementById('wakeLockText').className = "text-tn-green font-bold";
+            wakeLockSentinel.addEventListener('release', () => {
+              wakeLockSentinel = null;
+              document.getElementById('wakeLockIndicator').className = "w-1.5 h-1.5 rounded-full bg-tn-muted";
+              document.getElementById('wakeLockText').className = "text-tn-muted";
+            });
+          } else {
+            await wakeLockSentinel.release();
+            wakeLockSentinel = null;
+          }
+        } catch(e) {}
+      }
+    }
+
+    function updateCountdown() {
+      const now = new Date();
+      const diffTime = TARGET_DATE - now;
+      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+      document.getElementById('countdownDisplay').innerText = `${diffDays > 0 ? diffDays : 0}D`;
+    }
+
+    // --- IMPORT / EXPORT / RESET ---
+    function exportData() {
+      const cleanJson = JSON.stringify(appState, null, 2);
+      const blob = new Blob([cleanJson], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `fighter_polarized_green_${new Date().toISOString().slice(0,10)}.json`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    }
+
+    function importData(evt) {
+      const file = evt.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        try {
+          const imported = JSON.parse(e.target.result);
+          if (imported && imported.weeks && imported.maxes && imported.tms) {
+            appState = imported;
+            saveState();
+            location.reload();
+          }
+        } catch(err) {
+          console.error("Import error:", err);
+        }
+      };
+      reader.readAsText(file);
+    }
+
+    function showResetModal() {
+      document.getElementById('resetConfirmModal').classList.remove('hidden');
+    }
+    function hideResetModal() {
+      document.getElementById('resetConfirmModal').classList.add('hidden');
+    }
+    function executeReset() {
+      appState = createDefaultState();
+      saveState();
+      hideResetModal();
+      location.reload();
+    }
+
+    // --- INITIALIZATION ---
+    window.onload = function() {
+      loadState();
+
+      // Week dropdown population
+      const sel = document.getElementById('weekSelect');
+      sel.innerHTML = '';
+      WEEKS_DATA.forEach(w => {
+        const opt = document.createElement('option');
+        opt.value = w.week;
+        opt.innerText = `Week ${w.week}`;
+        if (w.week === (appState.settings.active_week || 1)) opt.selected = true;
+        sel.appendChild(opt);
+      });
+
+      // Populate input maxes
+      document.getElementById('input1RMPress').value = appState.maxes.press || 175;
+      document.getElementById('input1RMSquat').value = appState.maxes.squat || 225;
+      document.getElementById('input1RMPull').value = appState.maxes.pull || 200;
+
+      updateTMDisplays();
+      updateCountdown();
+      setInterval(updateCountdown, 60000);
+
+      updateTimerDisplay();
+      renderExecutionDashboard();
+      renderWeeklyGrid();
+      renderMatrixView();
+      updateGlobalProgress();
+    };
+  </script>
+</body>
+</html>
