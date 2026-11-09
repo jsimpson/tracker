@@ -135,7 +135,7 @@
     <!-- VIEW 3: 12-WEEK MATRIX -->
     <section id="view-matrix" class="hidden space-y-2 w-full">
       <div class="bg-tn-card border border-tn-border p-2.5 rounded-xl flex items-center justify-between">
-        <span class="text-xs font-mono font-bold text-white uppercase">12-WEEK MATRIX</span>
+        <span class="text-xs font-mono font-bold text-white uppercase">12-WEEK MASTER MATRIX</span>
         <span class="text-[10px] font-mono text-tn-muted">Op/FLU + Blue</span>
       </div>
       <div class="space-y-1.5" id="collapsibleMatrixContainer">
@@ -147,19 +147,43 @@
     <section id="view-settings" class="hidden space-y-3 w-full">
       <div class="bg-tn-card border border-tn-border rounded-xl p-3.5 space-y-3">
         <div class="flex items-center justify-between border-b border-tn-border/60 pb-2">
-          <h2 class="text-xs font-mono font-bold text-white uppercase tracking-wider">1RM & Training Maxes (90%)</h2>
+          <h2 class="text-xs font-mono font-bold text-white uppercase tracking-wider">1RM, Rep Max & Maxes</h2>
           <button type="button" onclick="recalculateFutureLoads()" class="text-[10px] font-mono text-tn-green hover:underline">Recalc Loads</button>
         </div>
 
         <div class="space-y-2">
-          <!-- Bodyweight -->
+          <!-- Current Bodyweight -->
           <div class="bg-tn-card2 p-2.5 rounded-lg border border-tn-border flex items-center justify-between gap-3">
             <div>
               <span class="text-xs font-mono font-bold text-white block">Current Bodyweight</span>
-              <span class="text-[10px] font-mono text-tn-muted">Used for Belt Load Deduction</span>
+              <span class="text-[10px] font-mono text-tn-muted">Used for pull-up load deduction</span>
             </div>
             <div class="flex items-center gap-1">
               <input type="number" id="inputBW" step="0.5" value="180" onchange="onMaxesChanged()" class="min-touch w-20 bg-tn-dark border border-tn-border rounded px-2 py-1 text-white font-mono text-xs text-right focus:outline-none focus:border-tn-green">
+              <span class="text-[11px] font-mono text-tn-muted">lb</span>
+            </div>
+          </div>
+
+          <!-- Bodyweight Pull-up Rep Max -->
+          <div class="bg-tn-card2 p-2.5 rounded-lg border border-tn-border flex items-center justify-between gap-3">
+            <div>
+              <span class="text-xs font-mono font-bold text-white block">Bodyweight Pull-up Rep Max</span>
+              <span class="text-[10px] font-mono text-tn-muted">Reps = % × Rep Max when load &le; BW</span>
+            </div>
+            <div class="flex items-center gap-1">
+              <input type="number" id="inputPullRepMax" step="1" value="12" onchange="onMaxesChanged()" class="min-touch w-20 bg-tn-dark border border-tn-border rounded px-2 py-1 text-white font-mono text-xs text-right focus:outline-none focus:border-tn-blue">
+              <span class="text-[11px] font-mono text-tn-muted">reps</span>
+            </div>
+          </div>
+
+          <!-- Weighted Pull-up 1RM (Total: BW + Belt) -->
+          <div class="bg-tn-card2 p-2.5 rounded-lg border border-tn-border flex items-center justify-between gap-3">
+            <div>
+              <span class="text-xs font-mono font-bold text-white block">Pull-ups 1RM (Total: BW + Belt)</span>
+              <span class="text-[10px] font-mono text-tn-subtext">Belt Load: <strong id="pullBeltDisplay" class="text-tn-blue">+45 lb</strong></span>
+            </div>
+            <div class="flex items-center gap-1">
+              <input type="number" id="input1RMPull" step="2.5" value="225" onchange="onMaxesChanged()" class="min-touch w-20 bg-tn-dark border border-tn-border rounded px-2 py-1 text-white font-mono text-xs text-right focus:outline-none focus:border-tn-blue">
               <span class="text-[11px] font-mono text-tn-muted">lb</span>
             </div>
           </div>
@@ -196,18 +220,6 @@
             </div>
             <div class="flex items-center gap-1">
               <input type="number" id="input1RMRdl" step="5" value="185" onchange="onMaxesChanged()" class="min-touch w-20 bg-tn-dark border border-tn-border rounded px-2 py-1 text-white font-mono text-xs text-right focus:outline-none focus:border-tn-orange">
-              <span class="text-[11px] font-mono text-tn-muted">lb</span>
-            </div>
-          </div>
-
-          <!-- Pull-ups (Total Load) -->
-          <div class="bg-tn-card2 p-2.5 rounded-lg border border-tn-border flex items-center justify-between gap-3">
-            <div>
-              <span class="text-xs font-mono font-bold text-white block">Pull-ups (Total Load: BW + Belt)</span>
-              <span class="text-[10px] font-mono text-tn-subtext">TM: <strong id="tmDisplayPull" class="text-tn-blue">--</strong></span>
-            </div>
-            <div class="flex items-center gap-1">
-              <input type="number" id="input1RMPull" step="2.5" value="215" onchange="onMaxesChanged()" class="min-touch w-20 bg-tn-dark border border-tn-border rounded px-2 py-1 text-white font-mono text-xs text-right focus:outline-none focus:border-tn-blue">
               <span class="text-[11px] font-mono text-tn-muted">lb</span>
             </div>
           </div>
@@ -261,24 +273,26 @@
 
   <script>
     // --- PROTOCOL SPECIFICATION: Op/FLU + Polarized/Blue ---
-    const STORAGE_KEY = "sentinel_op_flu_blue_v6";
+    const STORAGE_KEY = "sentinel_op_flu_blue_v7";
 
-    // 12 Weeks (Two 6-Week TB Waves, Set Waving: 3s -> 4s -> 5s -> 3s -> 4s -> 5s, +5lb Upper / +10lb Lower in Block 2)
+    // 12 Weeks (Two 6-Week TB Waves, Set Waving: 3s -> 4s -> 5s -> 3s -> 4s -> 5s, +5lb Press/Pull, +10lb Squat/RDL in Block 2)
+    // Tuesday alternates between 30–60m LSS and 20m HIC (Hill Sprints, Meat Eater II, Fobbits)
+    // Saturday is 60–90m LSS throughout
     const WEEKS_DATA = [
       // BLOCK 1 (Weeks 1-6)
-      { week: 1, block: 1, pct: 0.75, reps: 5, heavySets: 3, pressOffset: 0, squatOffset: 0, rdlOffset: 0, hicName: "Hill Sprints", ruckDuration: 40 },
-      { week: 2, block: 1, pct: 0.80, reps: 5, heavySets: 4, pressOffset: 0, squatOffset: 0, rdlOffset: 0, hicName: "Meat Eater II", ruckDuration: 45 },
-      { week: 3, block: 1, pct: 0.85, reps: 3, heavySets: 5, pressOffset: 0, squatOffset: 0, rdlOffset: 0, hicName: "Fobbit Intervals", ruckDuration: 50 },
-      { week: 4, block: 1, pct: 0.75, reps: 5, heavySets: 3, pressOffset: 0, squatOffset: 0, rdlOffset: 0, hicName: "Hill Sprints", ruckDuration: 40 },
-      { week: 5, block: 1, pct: 0.80, reps: 5, heavySets: 4, pressOffset: 0, squatOffset: 0, rdlOffset: 0, hicName: "Meat Eater II", ruckDuration: 55 },
-      { week: 6, block: 1, pct: 0.85, reps: 3, heavySets: 5, pressOffset: 0, squatOffset: 0, rdlOffset: 0, hicName: "Fobbit Intervals", ruckDuration: 60 },
+      { week: 1, block: 1, pct: 0.75, reps: 5, heavySets: 3, pressOffset: 0, squatOffset: 0, rdlOffset: 0, tueType: "lss", tueDesc: "30–60m LSS", satDesc: "60–90m LSS" },
+      { week: 2, block: 1, pct: 0.80, reps: 5, heavySets: 4, pressOffset: 0, squatOffset: 0, rdlOffset: 0, tueType: "hic", tueDesc: "Hill Sprints (20m)", satDesc: "60–90m LSS" },
+      { week: 3, block: 1, pct: 0.85, reps: 3, heavySets: 5, pressOffset: 0, squatOffset: 0, rdlOffset: 0, tueType: "lss", tueDesc: "30–60m LSS", satDesc: "60–90m LSS" },
+      { week: 4, block: 1, pct: 0.75, reps: 5, heavySets: 3, pressOffset: 0, squatOffset: 0, rdlOffset: 0, tueType: "hic", tueDesc: "Meat Eater II (20m)", satDesc: "60–90m LSS" },
+      { week: 5, block: 1, pct: 0.80, reps: 5, heavySets: 4, pressOffset: 0, squatOffset: 0, rdlOffset: 0, tueType: "lss", tueDesc: "30–60m LSS", satDesc: "60–90m LSS" },
+      { week: 6, block: 1, pct: 0.85, reps: 3, heavySets: 5, pressOffset: 0, squatOffset: 0, rdlOffset: 0, tueType: "hic", tueDesc: "Fobbit Intervals (20m)", satDesc: "60–90m LSS" },
       // BLOCK 2 (Weeks 7-12) — Forced Progression (+5lb Press/Pull, +10lb Squat/RDL)
-      { week: 7, block: 2, pct: 0.75, reps: 5, heavySets: 3, pressOffset: 5, squatOffset: 10, rdlOffset: 10, hicName: "Hill Sprints", ruckDuration: 45 },
-      { week: 8, block: 2, pct: 0.80, reps: 5, heavySets: 4, pressOffset: 5, squatOffset: 10, rdlOffset: 10, hicName: "Meat Eater II", ruckDuration: 50 },
-      { week: 9, block: 2, pct: 0.85, reps: 3, heavySets: 5, pressOffset: 5, squatOffset: 10, rdlOffset: 10, hicName: "Fobbit Intervals", ruckDuration: 55 },
-      { week: 10, block: 2, pct: 0.75, reps: 5, heavySets: 3, pressOffset: 5, squatOffset: 10, rdlOffset: 10, hicName: "Hill Sprints", ruckDuration: 45 },
-      { week: 11, block: 2, pct: 0.80, reps: 5, heavySets: 4, pressOffset: 5, squatOffset: 10, rdlOffset: 10, hicName: "Meat Eater II", ruckDuration: 60 },
-      { week: 12, block: 2, pct: 0.85, reps: 3, heavySets: 5, pressOffset: 5, squatOffset: 10, rdlOffset: 10, hicName: "Fobbit Intervals", ruckDuration: 45 }
+      { week: 7, block: 2, pct: 0.75, reps: 5, heavySets: 3, pressOffset: 5, squatOffset: 10, rdlOffset: 10, tueType: "lss", tueDesc: "30–60m LSS", satDesc: "60–90m LSS" },
+      { week: 8, block: 2, pct: 0.80, reps: 5, heavySets: 4, pressOffset: 5, squatOffset: 10, rdlOffset: 10, tueType: "hic", tueDesc: "Hill Sprints (20m)", satDesc: "60–90m LSS" },
+      { week: 9, block: 2, pct: 0.85, reps: 3, heavySets: 5, pressOffset: 5, squatOffset: 10, rdlOffset: 10, tueType: "lss", tueDesc: "30–60m LSS", satDesc: "60–90m LSS" },
+      { week: 10, block: 2, pct: 0.75, reps: 5, heavySets: 3, pressOffset: 5, squatOffset: 10, rdlOffset: 10, tueType: "hic", tueDesc: "Meat Eater II (20m)", satDesc: "60–90m LSS" },
+      { week: 11, block: 2, pct: 0.80, reps: 5, heavySets: 4, pressOffset: 5, squatOffset: 10, rdlOffset: 10, tueType: "lss", tueDesc: "30–60m LSS", satDesc: "60–90m LSS" },
+      { week: 12, block: 2, pct: 0.85, reps: 3, heavySets: 5, pressOffset: 5, squatOffset: 10, rdlOffset: 10, tueType: "hic", tueDesc: "Fobbit Intervals (20m)", satDesc: "60–90m LSS" }
     ];
 
     const DAYS_CONFIG = [
@@ -295,22 +309,35 @@
       return (Math.round(val / 2.5) * 2.5);
     }
 
-    function computeWeekLoads(weekNum, tms, bw) {
+    function computeWeekLoads(weekNum, tms, maxes) {
       const wk = WEEKS_DATA.find(x => x.week === weekNum) || WEEKS_DATA[0];
       const pressTM = tms.press + wk.pressOffset;
       const squatTM = tms.squat + wk.squatOffset;
       const rdlTM = (tms.rdl || 165) + wk.rdlOffset;
-      const pullTM = (tms.pull || 195) + wk.pressOffset;
 
-      const pullTotal = roundToNearest2p5(pullTM * wk.pct);
-      const addedLoad = pullTotal - bw;
-      const pullDisplay = addedLoad > 0 ? `+${addedLoad} lb` : "BW";
+      // Weighted Pull-up calculation using Total 1RM (BW + Belt)
+      const pull1RM = (maxes.pull || 225) + wk.pressOffset;
+      const pullTotal = roundToNearest2p5(pull1RM * wk.pct);
+      const addedLoad = pullTotal - maxes.bw;
+
+      let pullDisplay = "";
+      let pullReps = wk.reps;
+
+      if (addedLoad > 0) {
+        pullDisplay = `+${addedLoad} lb`;
+        pullReps = wk.reps;
+      } else {
+        pullDisplay = "BW";
+        const repMax = maxes.pullRepMax || 12;
+        pullReps = Math.max(1, Math.round(wk.pct * repMax));
+      }
 
       return {
         press: roundToNearest2p5(pressTM * wk.pct),
         squat: roundToNearest2p5(squatTM * wk.pct),
         rdl: roundToNearest2p5(rdlTM * wk.pct),
         pull: pullDisplay,
+        pullReps: pullReps,
         pullTotal: pullTotal
       };
     }
@@ -322,7 +349,7 @@
       if (dayId === 'mon') {
         return { press: Array(3).fill(false), squat: Array(3).fill(false), pull: Array(3).fill(false), curls: Array(3).fill(false), lss: false, completed: false };
       } else if (dayId === 'tue') {
-        return { hic: false, completed: false };
+        return { quality: false, completed: false };
       } else if (dayId === 'wed') {
         return { completed: false };
       } else if (dayId === 'thu') {
@@ -330,7 +357,7 @@
       } else if (dayId === 'fri') {
         return { press: Array(heavySets).fill(false), pull: Array(3).fill(false), carries: Array(3).fill(false), curls: Array(2).fill(false), completed: false };
       } else if (dayId === 'sat') {
-        return { ruck: false, completed: false };
+        return { lssLong: false, completed: false };
       } else if (dayId === 'sun') {
         return { completed: false };
       }
@@ -339,16 +366,15 @@
 
     function createDefaultState() {
       const bw = 180;
-      const maxes = { press: 165, squat: 165, rdl: 185, pull: 215, bw: bw };
+      const maxes = { bw: bw, pullRepMax: 12, pull: 225, press: 165, squat: 165, rdl: 185 };
       const tms = {
         press: roundToNearest2p5(165 * 0.90),
         squat: roundToNearest2p5(165 * 0.90),
-        rdl: roundToNearest2p5(185 * 0.90),
-        pull: roundToNearest2p5(215 * 0.90) // 195 lb total
+        rdl: roundToNearest2p5(185 * 0.90)
       };
 
       const state = {
-        version: 6,
+        version: 7,
         settings: {
           active_week: 1,
           active_day: "mon"
@@ -360,7 +386,7 @@
 
       for (let w = 1; w <= 12; w++) {
         state.weeks[w] = {
-          loads: computeWeekLoads(w, state.tms, state.maxes.bw),
+          loads: computeWeekLoads(w, state.tms, state.maxes),
           logged: {
             mon: createDefaultDayLogged(w, 'mon'),
             tue: createDefaultDayLogged(w, 'tue'),
@@ -382,7 +408,7 @@
         const raw = localStorage.getItem(STORAGE_KEY);
         if (raw) {
           const parsed = JSON.parse(raw);
-          if (parsed && parsed.version === 6 && parsed.weeks && parsed.maxes && parsed.tms) {
+          if (parsed && parsed.version === 7 && parsed.weeks && parsed.maxes && parsed.tms) {
             appState = parsed;
           }
         }
@@ -390,13 +416,13 @@
         console.error("State parse error:", e);
       }
       if (!appState.maxes.bw) appState.maxes.bw = 180;
-      if (!appState.maxes.pull) appState.maxes.pull = 215;
-      if (!appState.tms.pull) appState.tms.pull = roundToNearest2p5(appState.maxes.pull * 0.90);
+      if (!appState.maxes.pullRepMax) appState.maxes.pullRepMax = 12;
+      if (!appState.maxes.pull) appState.maxes.pull = 225;
 
       for (let w = 1; w <= 12; w++) {
         if (!appState.weeks[w]) {
           appState.weeks[w] = {
-            loads: computeWeekLoads(w, appState.tms, appState.maxes.bw),
+            loads: computeWeekLoads(w, appState.tms, appState.maxes),
             logged: {
               mon: createDefaultDayLogged(w, 'mon'),
               tue: createDefaultDayLogged(w, 'tue'),
@@ -473,26 +499,28 @@
       document.getElementById('tmDisplayPress').innerText = `${appState.tms.press} lb`;
       document.getElementById('tmDisplaySquat').innerText = `${appState.tms.squat} lb`;
       document.getElementById('tmDisplayRdl').innerText = `${appState.tms.rdl} lb`;
-      document.getElementById('tmDisplayPull').innerText = `${appState.tms.pull} lb`;
+      const beltLoad = (appState.maxes.pull || 225) - (appState.maxes.bw || 180);
+      document.getElementById('pullBeltDisplay').innerText = beltLoad > 0 ? `+${beltLoad} lb` : `BW`;
     }
 
     function onMaxesChanged() {
       const bw = parseFloat(document.getElementById('inputBW').value) || 180;
+      const pullRepMax = parseInt(document.getElementById('inputPullRepMax').value, 10) || 12;
+      const pull1RM = parseFloat(document.getElementById('input1RMPull').value) || 225;
       const p = parseFloat(document.getElementById('input1RMPress').value) || 165;
       const s = parseFloat(document.getElementById('input1RMSquat').value) || 165;
       const r = parseFloat(document.getElementById('input1RMRdl').value) || 185;
-      const pu = parseFloat(document.getElementById('input1RMPull').value) || 215;
 
       appState.maxes.bw = bw;
+      appState.maxes.pullRepMax = pullRepMax;
+      appState.maxes.pull = pull1RM;
       appState.maxes.press = p;
       appState.maxes.squat = s;
       appState.maxes.rdl = r;
-      appState.maxes.pull = pu;
 
       appState.tms.press = roundToNearest2p5(p * 0.90);
       appState.tms.squat = roundToNearest2p5(s * 0.90);
       appState.tms.rdl = roundToNearest2p5(r * 0.90);
-      appState.tms.pull = roundToNearest2p5(pu * 0.90);
 
       updateTMDisplays();
 
@@ -504,7 +532,7 @@
           if (loggedObj[day] && loggedObj[day].completed) isPastLogged = true;
         }
         if (!isPastLogged) {
-          appState.weeks[w].loads = computeWeekLoads(w, appState.tms, appState.maxes.bw);
+          appState.weeks[w].loads = computeWeekLoads(w, appState.tms, appState.maxes);
         }
       }
 
@@ -517,7 +545,7 @@
     function recalculateFutureLoads() {
       const curW = appState.settings.active_week || 1;
       for (let w = curW; w <= 12; w++) {
-        appState.weeks[w].loads = computeWeekLoads(w, appState.tms, appState.maxes.bw);
+        appState.weeks[w].loads = computeWeekLoads(w, appState.tms, appState.maxes);
       }
       saveState();
       renderExecutionDashboard();
@@ -588,7 +616,7 @@
         const lssDone = !!wkLogged.lss;
         wkLogged.completed = pressDone && squatDone && pullDone && curlsDone && lssDone;
       } else if (dayId === 'tue') {
-        wkLogged.completed = !!wkLogged.hic;
+        wkLogged.completed = !!wkLogged.quality;
       } else if (dayId === 'wed') {
         wkLogged.completed = !!wkLogged.completed;
       } else if (dayId === 'thu') {
@@ -603,7 +631,7 @@
         const curlsDone = wkLogged.curls.every(Boolean);
         wkLogged.completed = pressDone && pullDone && carriesDone && curlsDone;
       } else if (dayId === 'sat') {
-        wkLogged.completed = !!wkLogged.ruck;
+        wkLogged.completed = !!wkLogged.lssLong;
       } else if (dayId === 'sun') {
         wkLogged.completed = !!wkLogged.completed;
       }
@@ -624,7 +652,7 @@
         wkLogged.curls = wkLogged.curls.map(() => target);
         wkLogged.lss = target;
       } else if (dayId === 'tue') {
-        wkLogged.hic = target;
+        wkLogged.quality = target;
       } else if (dayId === 'wed') {
         // handled below
       } else if (dayId === 'thu') {
@@ -637,7 +665,7 @@
         wkLogged.carries = wkLogged.carries.map(() => target);
         wkLogged.curls = wkLogged.curls.map(() => target);
       } else if (dayId === 'sat') {
-        wkLogged.ruck = target;
+        wkLogged.lssLong = target;
       } else if (dayId === 'sun') {
         // handled below
       }
@@ -682,17 +710,17 @@
         renderLiftingCards(container, w, dayId, loads, [
           { key: 'press', name: 'Bench Press', load: loads.press, color: 'text-tn-green', sets: 3, reps: currentWk.reps },
           { key: 'squat', name: 'Zercher Squat', load: loads.squat, color: 'text-tn-cyan', sets: 3, reps: currentWk.reps },
-          { key: 'pull', name: 'Ring Pull-ups', load: loads.pull, color: 'text-tn-blue', sets: 3, reps: currentWk.reps },
+          { key: 'pull', name: 'Ring Pull-ups', load: loads.pull, color: 'text-tn-blue', sets: 3, reps: loads.pullReps },
           { key: 'curls', name: 'Bicep Curls', load: '2 RIR', color: 'text-tn-purple', sets: 3, reps: '8-10' }
         ]);
         renderLssCard(container, w, dayId);
 
       } else if (dayId === 'tue') {
-        const done = !!wkLogged.hic;
+        const done = !!wkLogged.quality;
         container.innerHTML = `
           <div class="bg-tn-card2 border border-tn-border rounded-lg p-3">
-            <button type="button" onclick="toggleGenericItem(${w}, '${dayId}', 'hic')" class="min-touch w-full p-3 rounded-lg border text-xs font-mono font-bold flex items-center justify-between transition ${done ? 'bg-tn-green border-tn-green text-tn-dark font-black' : 'bg-tn-dark border-tn-border text-white'}">
-              <span>${currentWk.hicName} (20m)</span>
+            <button type="button" onclick="toggleGenericItem(${w}, '${dayId}', 'quality')" class="min-touch w-full p-3 rounded-lg border text-xs font-mono font-bold flex items-center justify-between transition ${done ? 'bg-tn-green border-tn-green text-tn-dark font-black' : 'bg-tn-dark border-tn-border text-white'}">
+              <span>${currentWk.tueDesc}</span>
               <span class="text-sm">${done ? '✓' : 'Log'}</span>
             </button>
           </div>
@@ -719,17 +747,17 @@
       } else if (dayId === 'fri') {
         renderLiftingCards(container, w, dayId, loads, [
           { key: 'press', name: 'Bench Press', load: loads.press, color: 'text-tn-green', sets: currentWk.heavySets, reps: currentWk.reps },
-          { key: 'pull', name: 'Ring Pull-ups', load: loads.pull, color: 'text-tn-blue', sets: 3, reps: currentWk.reps },
+          { key: 'pull', name: 'Ring Pull-ups', load: loads.pull, color: 'text-tn-blue', sets: 3, reps: loads.pullReps },
           { key: 'curls', name: 'Bicep Curls', load: '2 RIR', color: 'text-tn-purple', sets: 2, reps: '8-10' }
         ]);
         renderCarryCards(container, w, dayId);
 
       } else if (dayId === 'sat') {
-        const done = !!wkLogged.ruck;
+        const done = !!wkLogged.lssLong;
         container.innerHTML = `
           <div class="bg-tn-card2 border border-tn-border rounded-lg p-3">
-            <button type="button" onclick="toggleGenericItem(${w}, '${dayId}', 'ruck')" class="min-touch w-full p-3 rounded-lg border text-xs font-mono font-bold flex items-center justify-between transition ${done ? 'bg-tn-green border-tn-green text-tn-dark font-black' : 'bg-tn-dark border-tn-border text-white'}">
-              <span>${currentWk.ruckDuration}m Ruck (35 lb)</span>
+            <button type="button" onclick="toggleGenericItem(${w}, '${dayId}', 'lssLong')" class="min-touch w-full p-3 rounded-lg border text-xs font-mono font-bold flex items-center justify-between transition ${done ? 'bg-tn-green border-tn-green text-tn-dark font-black' : 'bg-tn-dark border-tn-border text-white'}">
+              <span>${currentWk.satDesc}</span>
               <span class="text-sm">${done ? '✓' : 'Log'}</span>
             </button>
           </div>
@@ -885,17 +913,17 @@
         let contentDesc = '';
 
         if (d.id === 'mon') {
-          contentDesc = `Bench (${loads.press}), Zercher (${loads.squat}), Pull-ups (${loads.pull}), Curls + 20m LSS`;
+          contentDesc = `Bench (${loads.press}), Zercher (${loads.squat}), Pull-ups (${loads.pull} × ${loads.pullReps}), Curls + 20m LSS`;
         } else if (d.id === 'tue') {
-          contentDesc = `${wk.hicName} (20m)`;
+          contentDesc = wk.tueDesc;
         } else if (d.id === 'wed') {
           contentDesc = `Rest`;
         } else if (d.id === 'thu') {
           contentDesc = `Zercher (${loads.squat} × ${wk.heavySets}s), RDL (${loads.rdl} × 3s) + 20m LSS`;
         } else if (d.id === 'fri') {
-          contentDesc = `Bench (${loads.press} × ${wk.heavySets}s), Pull-ups (${loads.pull}), Carries, Curls`;
+          contentDesc = `Bench (${loads.press} × ${wk.heavySets}s), Pull-ups (${loads.pull} × ${loads.pullReps}), Carries, Curls`;
         } else if (d.id === 'sat') {
-          contentDesc = `${wk.ruckDuration}m Ruck (35 lb)`;
+          contentDesc = wk.satDesc;
         } else if (d.id === 'sun') {
           contentDesc = `Rest`;
         }
@@ -954,13 +982,13 @@
               <div class="p-2.5 border-t border-tn-border/60 space-y-1 bg-tn-card text-[11px]">
                 <div class="flex justify-between text-tn-subtext pb-1 border-b border-tn-border/40">
                   <span class="text-tn-muted">LOADS:</span>
-                  <span class="text-tn-green font-bold">B: ${loads.press} | Z: ${loads.squat} | RDL: ${loads.rdl} | PU: ${loads.pull}</span>
+                  <span class="text-tn-green font-bold">B: ${loads.press} | Z: ${loads.squat} | RDL: ${loads.rdl} | PU: ${loads.pull} (${loads.pullReps}r)</span>
                 </div>
                 <div class="text-tn-subtext"><span class="text-tn-muted">MON:</span> Full (${loads.press} / ${loads.squat} / ${loads.pull}) + Curls + 20m LSS</div>
-                <div class="text-tn-subtext"><span class="text-tn-muted">TUE:</span> ${w.hicName} (20m)</div>
+                <div class="text-tn-subtext"><span class="text-tn-muted">TUE:</span> ${w.tueDesc}</div>
                 <div class="text-tn-subtext"><span class="text-tn-muted">THU:</span> Lower (${loads.squat} × ${w.heavySets}s, ${loads.rdl} × 3s) + 20m LSS</div>
                 <div class="text-tn-subtext"><span class="text-tn-muted">FRI:</span> Upper (${loads.press} × ${w.heavySets}s, ${loads.pull} × 3s) + Carries + Curls</div>
-                <div class="text-tn-subtext"><span class="text-tn-muted">SAT:</span> ${w.ruckDuration}m Ruck (35 lb)</div>
+                <div class="text-tn-subtext"><span class="text-tn-muted">SAT:</span> ${w.satDesc}</div>
                 <div class="pt-1 text-right">
                   <button type="button" onclick="jumpToWeek(${w.week})" class="text-tn-green hover:underline">Select Week →</button>
                 </div>
@@ -986,6 +1014,7 @@
     }
 
     function updateGlobalProgress() {
+      // 5 training days per week across 12 weeks = 60 total training sessions
       let totalTrainingDays = 12 * 5;
       let completedCount = 0;
       for (let w = 1; w <= 12; w++) {
@@ -1157,10 +1186,11 @@
       });
 
       document.getElementById('inputBW').value = appState.maxes.bw || 180;
+      document.getElementById('inputPullRepMax').value = appState.maxes.pullRepMax || 12;
+      document.getElementById('input1RMPull').value = appState.maxes.pull || 225;
       document.getElementById('input1RMPress').value = appState.maxes.press || 165;
       document.getElementById('input1RMSquat').value = appState.maxes.squat || 165;
       document.getElementById('input1RMRdl').value = appState.maxes.rdl || 185;
-      document.getElementById('input1RMPull').value = appState.maxes.pull || 215;
 
       updateTMDisplays();
       updateTimerDisplay();
