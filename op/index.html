@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-  <title>S E N T I N E L — Op/ULF</title>
+  <title>S E N T I N E L — Op/FLU</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script>
     tailwind.config = {
@@ -22,6 +22,7 @@
               green: '#73daca',
               cyan: '#7dcfff',
               blue: '#7aa2f7',
+              purple: '#bb9af7',
               orange: '#ff9e64',
               coral: '#f7768e'
             }
@@ -60,12 +61,10 @@
   <header class="border-b border-tn-border bg-tn-card/95 backdrop-blur sticky top-0 z-30 w-full">
     <div class="w-full max-w-lg mx-auto px-3 py-2 flex flex-wrap items-center justify-between gap-2">
       <div class="flex items-center gap-2">
-        <span class="text-xs font-mono font-bold tracking-widest text-tn-green uppercase">Op/ULF</span>
-        <span class="text-[10px] px-1.5 py-0.5 rounded bg-tn-green/15 text-tn-green font-mono border border-tn-green/30 font-bold">POLARIZED BLACK</span>
+        <span class="text-xs font-mono font-bold tracking-widest text-tn-green uppercase">Op/FLU</span>
+        <span class="text-[10px] px-1.5 py-0.5 rounded bg-tn-blue/15 text-tn-blue font-mono border border-tn-blue/30 font-bold">POLARIZED BLUE</span>
       </div>
       <div class="flex items-center gap-2 font-mono text-[11px]">
-        <span class="text-tn-muted">T-MINUS:</span>
-        <span id="countdownDisplay" class="text-tn-orange font-bold">--D</span>
         <button type="button" onclick="toggleWakeLock()" class="px-2 py-1 rounded border border-tn-border bg-tn-dark text-[10px] text-tn-muted flex items-center gap-1.5">
           <span class="w-1.5 h-1.5 rounded-full bg-tn-muted" id="wakeLockIndicator"></span>
           <span id="wakeLockText">SCREEN</span>
@@ -106,16 +105,13 @@
       <!-- Day Log Card -->
       <div class="bg-tn-card border border-tn-border rounded-xl p-3 sm:p-4 shadow-sm space-y-3 w-full">
         <div class="flex items-center justify-between border-b border-tn-border/80 pb-2">
-          <div>
-            <h2 id="dayHeaderDay" class="text-sm font-mono font-bold text-white uppercase tracking-wider">MONDAY</h2>
-            <span id="dayHeaderSubtitle" class="text-[11px] font-mono text-tn-green block">Full Body: Bench, Zerchers, Pull-ups, Swings</span>
-          </div>
+          <h2 id="dayHeaderDay" class="text-sm font-mono font-bold text-white uppercase tracking-wider">MONDAY</h2>
           <button type="button" onclick="toggleEntireDay()" id="dayCompleteBtn" class="min-touch px-3 py-1.5 rounded-lg border text-xs font-mono font-bold transition flex items-center gap-1.5 bg-tn-dark border-tn-border text-tn-subtext">
             Log Day
           </button>
         </div>
 
-        <!-- Exercises / Runs -->
+        <!-- Exercises / Sessions -->
         <div id="dayExecutionDetails" class="space-y-2.5 w-full">
           <!-- Populated by JS -->
         </div>
@@ -125,7 +121,7 @@
     <!-- VIEW 2: WEEKLY SCHEDULE -->
     <section id="view-weekly" class="hidden space-y-2.5 w-full">
       <div class="flex items-center justify-between bg-tn-card border border-tn-border p-2.5 rounded-xl">
-        <h2 class="text-xs font-mono font-bold text-white uppercase">WEEK <span id="weeklyViewWeekNum">1</span> SCHEDULE</h2>
+        <h2 class="text-xs font-mono font-bold text-white uppercase">WEEK <span id="weeklyViewWeekNum">1</span></h2>
         <div class="flex items-center gap-1">
           <button type="button" onclick="changeActiveWeekOffset(-1)" class="min-touch px-3 py-1 bg-tn-dark border border-tn-border rounded text-xs font-mono text-tn-text">←</button>
           <button type="button" onclick="changeActiveWeekOffset(1)" class="min-touch px-3 py-1 bg-tn-dark border border-tn-border rounded text-xs font-mono text-tn-text">→</button>
@@ -136,11 +132,11 @@
       </div>
     </section>
 
-    <!-- VIEW 3: 13-WEEK MATRIX -->
+    <!-- VIEW 3: 12-WEEK MATRIX -->
     <section id="view-matrix" class="hidden space-y-2 w-full">
       <div class="bg-tn-card border border-tn-border p-2.5 rounded-xl flex items-center justify-between">
-        <span class="text-xs font-mono font-bold text-white uppercase">13-WEEK MASTER MATRIX</span>
-        <span class="text-[10px] font-mono text-tn-muted">Feb 7, 2027</span>
+        <span class="text-xs font-mono font-bold text-white uppercase">12-WEEK MATRIX</span>
+        <span class="text-[10px] font-mono text-tn-muted">Op/FLU + Blue</span>
       </div>
       <div class="space-y-1.5" id="collapsibleMatrixContainer">
         <!-- Rendered by JS -->
@@ -156,9 +152,22 @@
         </div>
 
         <div class="space-y-2">
+          <!-- Bodyweight -->
           <div class="bg-tn-card2 p-2.5 rounded-lg border border-tn-border flex items-center justify-between gap-3">
             <div>
-              <span class="text-xs font-mono font-bold text-white block">Bench / Floor Press</span>
+              <span class="text-xs font-mono font-bold text-white block">Current Bodyweight</span>
+              <span class="text-[10px] font-mono text-tn-muted">Used for Belt Load Deduction</span>
+            </div>
+            <div class="flex items-center gap-1">
+              <input type="number" id="inputBW" step="0.5" value="180" onchange="onMaxesChanged()" class="min-touch w-20 bg-tn-dark border border-tn-border rounded px-2 py-1 text-white font-mono text-xs text-right focus:outline-none focus:border-tn-green">
+              <span class="text-[11px] font-mono text-tn-muted">lb</span>
+            </div>
+          </div>
+
+          <!-- Bench Press -->
+          <div class="bg-tn-card2 p-2.5 rounded-lg border border-tn-border flex items-center justify-between gap-3">
+            <div>
+              <span class="text-xs font-mono font-bold text-white block">Bench Press</span>
               <span class="text-[10px] font-mono text-tn-subtext">TM: <strong id="tmDisplayPress" class="text-tn-green">--</strong></span>
             </div>
             <div class="flex items-center gap-1">
@@ -167,6 +176,7 @@
             </div>
           </div>
 
+          <!-- Zercher Squat -->
           <div class="bg-tn-card2 p-2.5 rounded-lg border border-tn-border flex items-center justify-between gap-3">
             <div>
               <span class="text-xs font-mono font-bold text-white block">Zercher Squat</span>
@@ -178,13 +188,26 @@
             </div>
           </div>
 
+          <!-- Barbell RDL -->
           <div class="bg-tn-card2 p-2.5 rounded-lg border border-tn-border flex items-center justify-between gap-3">
             <div>
-              <span class="text-xs font-mono font-bold text-white block">Pull-ups (Total Load)</span>
-              <span class="text-[10px] font-mono text-tn-subtext">TM: <strong id="tmDisplayPull" class="text-tn-orange">--</strong></span>
+              <span class="text-xs font-mono font-bold text-white block">Barbell RDL</span>
+              <span class="text-[10px] font-mono text-tn-subtext">TM: <strong id="tmDisplayRdl" class="text-tn-orange">--</strong></span>
             </div>
             <div class="flex items-center gap-1">
-              <input type="number" id="input1RMPull" step="2.5" value="200" onchange="onMaxesChanged()" class="min-touch w-20 bg-tn-dark border border-tn-border rounded px-2 py-1 text-white font-mono text-xs text-right focus:outline-none focus:border-tn-orange">
+              <input type="number" id="input1RMRdl" step="5" value="185" onchange="onMaxesChanged()" class="min-touch w-20 bg-tn-dark border border-tn-border rounded px-2 py-1 text-white font-mono text-xs text-right focus:outline-none focus:border-tn-orange">
+              <span class="text-[11px] font-mono text-tn-muted">lb</span>
+            </div>
+          </div>
+
+          <!-- Pull-ups (Total Load) -->
+          <div class="bg-tn-card2 p-2.5 rounded-lg border border-tn-border flex items-center justify-between gap-3">
+            <div>
+              <span class="text-xs font-mono font-bold text-white block">Pull-ups (Total Load: BW + Belt)</span>
+              <span class="text-[10px] font-mono text-tn-subtext">TM: <strong id="tmDisplayPull" class="text-tn-blue">--</strong></span>
+            </div>
+            <div class="flex items-center gap-1">
+              <input type="number" id="input1RMPull" step="2.5" value="215" onchange="onMaxesChanged()" class="min-touch w-20 bg-tn-dark border border-tn-border rounded px-2 py-1 text-white font-mono text-xs text-right focus:outline-none focus:border-tn-blue">
               <span class="text-[11px] font-mono text-tn-muted">lb</span>
             </div>
           </div>
@@ -205,7 +228,7 @@
     <div id="resetConfirmModal" class="hidden fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4">
       <div class="bg-tn-card border border-tn-border rounded-xl p-4 max-w-xs w-full space-y-3 font-mono text-xs">
         <h3 class="font-bold text-tn-coral text-sm uppercase">Reset All Logs?</h3>
-        <p class="text-tn-subtext">All checked sets and logged runs will be completely reset.</p>
+        <p class="text-tn-subtext">All checked sets and logged sessions will be completely reset.</p>
         <div class="flex gap-2 justify-end pt-2">
           <button type="button" onclick="hideResetModal()" class="min-touch px-3 py-1.5 rounded bg-tn-dark border border-tn-border text-white">Cancel</button>
           <button type="button" onclick="executeReset()" class="min-touch px-3 py-1.5 rounded bg-tn-coral text-tn-dark font-bold">Reset</button>
@@ -226,10 +249,10 @@
       </div>
 
       <div class="flex items-center gap-1 font-mono text-xs" id="timerPresetsContainer">
-        <button type="button" onclick="setTimerPreset(60)" class="min-touch px-2 py-1 rounded bg-tn-card2 text-tn-subtext border border-tn-border">60s</button>
-        <button type="button" onclick="setTimerPreset(90)" class="min-touch px-2 py-1 rounded bg-tn-card2 text-tn-subtext border border-tn-border">90s</button>
-        <button type="button" onclick="setTimerPreset(120)" class="min-touch px-2 py-1 rounded bg-tn-green/20 text-tn-green font-bold border border-tn-green/40">120s</button>
-        <button type="button" onclick="setTimerPreset(180)" class="min-touch px-2 py-1 rounded bg-tn-card2 text-tn-subtext border border-tn-border">180s</button>
+        <button type="button" onclick="setTimerPreset(120)" class="min-touch px-2.5 py-1 rounded bg-tn-green/20 text-tn-green font-bold border border-tn-green/40">2m</button>
+        <button type="button" onclick="setTimerPreset(180)" class="min-touch px-2.5 py-1 rounded bg-tn-card2 text-tn-subtext border border-tn-border">3m</button>
+        <button type="button" onclick="setTimerPreset(240)" class="min-touch px-2.5 py-1 rounded bg-tn-card2 text-tn-subtext border border-tn-border">4m</button>
+        <button type="button" onclick="setTimerPreset(300)" class="min-touch px-2.5 py-1 rounded bg-tn-card2 text-tn-subtext border border-tn-border">5m</button>
       </div>
 
       <button type="button" onclick="resetTimer()" class="min-touch px-2 py-1 text-[11px] font-mono text-tn-muted hover:text-white">Reset</button>
@@ -237,88 +260,117 @@
   </aside>
 
   <script>
-    // --- PROTOCOL SPECIFICATION: Op/ULF + Polarized/Black ---
-    const TARGET_DATE = new Date("2027-02-07T07:00:00");
-    const STORAGE_KEY = "tb_op_ulf_black_state";
+    // --- PROTOCOL SPECIFICATION: Op/FLU + Polarized/Blue ---
+    const STORAGE_KEY = "sentinel_op_flu_blue_v6";
 
+    // 12 Weeks (Two 6-Week TB Waves, Set Waving: 3s -> 4s -> 5s -> 3s -> 4s -> 5s, +5lb Upper / +10lb Lower in Block 2)
     const WEEKS_DATA = [
-      { week: 1, dates: "Nov 9–15", pct: 0.75, reps: 5, tueQuality: "4x800m Repeats (400m jog recovery)", wedLSS: "60m Zone 2 Run", satLongRun: "60m Zone 2 Run", pressOffset: 0, squatOffset: 0 },
-      { week: 2, dates: "Nov 16–22", pct: 0.80, reps: 5, tueQuality: "Tempo: 1 mi warm-up + 3 mi @ 8:55 + 1 mi cool-down", wedLSS: "60m Zone 2 Run", satLongRun: "65m Zone 2 Run", pressOffset: 0, squatOffset: 0 },
-      { week: 3, dates: "Nov 23–29", pct: 0.85, reps: 3, tueQuality: "5x800m Repeats (400m jog recovery)", wedLSS: "60m Zone 2 Run", satLongRun: "70m Zone 2 Run", pressOffset: 0, squatOffset: 0 },
-      { week: 4, dates: "Nov 30–Dec 6", pct: 0.70, reps: 5, tueQuality: "20m Flat Jog (Deload)", wedLSS: "45m Easy Spin / Jog", satLongRun: "40m Cutback Run (Deload)", pressOffset: 0, squatOffset: 0 },
-      { week: 5, dates: "Dec 7–13", pct: 0.80, reps: 5, tueQuality: "Tempo: 1 mi warm-up + 4 mi @ 8:50 + 1 mi cool-down", wedLSS: "60m Zone 2 Run", satLongRun: "75m Zone 2 Run", pressOffset: 0, squatOffset: 0 },
-      { week: 6, dates: "Dec 14–20", pct: 0.85, reps: 3, tueQuality: "5x800m Repeats (400m jog recovery)", wedLSS: "60m Zone 2 Run", satLongRun: "80m Zone 2 Run", pressOffset: 0, squatOffset: 0 },
-      { week: 7, dates: "Dec 21–27", pct: 0.75, reps: 5, tueQuality: "Tempo: 1 mi warm-up + 4.5 mi @ 8:50 + 1 mi cool-down", wedLSS: "60m Zone 2 Run", satLongRun: "85m Zone 2 Run", pressOffset: 5, squatOffset: 10 },
-      { week: 8, dates: "Dec 28–Jan 3", pct: 0.70, reps: 5, tueQuality: "20m Flat Jog (Deload)", wedLSS: "45m Easy Spin / Jog", satLongRun: "45m Cutback Run (Deload)", pressOffset: 5, squatOffset: 10 },
-      { week: 9, dates: "Jan 4–10", pct: 0.80, reps: 5, tueQuality: "6x800m Repeats (400m jog recovery)", wedLSS: "60m Zone 2 Run", satLongRun: "90m Peak Long Run", pressOffset: 5, squatOffset: 10 },
-      { week: 10, dates: "Jan 11–17", pct: 0.85, reps: 3, tueQuality: "Tempo: 1 mi warm-up + 5 mi @ 8:50 + 1 mi cool-down", wedLSS: "60m Zone 2 Run", satLongRun: "85m Zone 2 Run", pressOffset: 5, squatOffset: 10 },
-      { week: 11, dates: "Jan 18–24", pct: 0.80, reps: 4, tueQuality: "4x800m Repeats (400m jog recovery)", wedLSS: "50m Zone 2 Run", satLongRun: "70m Cutback Run", pressOffset: 5, squatOffset: 10 },
-      { week: 12, dates: "Jan 25–31", pct: 0.75, reps: 4, tueQuality: "3 mi easy flat + 4x100m strides (Taper)", wedLSS: "40m Easy Jog", satLongRun: "40m Easy Flat Run (Taper)", pressOffset: 5, squatOffset: 10 },
-      { week: 13, dates: "Feb 1–7", pct: 0.70, reps: 5, tueQuality: "20m Easy Flush", wedLSS: "Rest", satLongRun: "Rest", pressOffset: 5, squatOffset: 10 }
+      // BLOCK 1 (Weeks 1-6)
+      { week: 1, block: 1, pct: 0.75, reps: 5, heavySets: 3, pressOffset: 0, squatOffset: 0, rdlOffset: 0, hicName: "Hill Sprints", ruckDuration: 40 },
+      { week: 2, block: 1, pct: 0.80, reps: 5, heavySets: 4, pressOffset: 0, squatOffset: 0, rdlOffset: 0, hicName: "Meat Eater II", ruckDuration: 45 },
+      { week: 3, block: 1, pct: 0.85, reps: 3, heavySets: 5, pressOffset: 0, squatOffset: 0, rdlOffset: 0, hicName: "Fobbit Intervals", ruckDuration: 50 },
+      { week: 4, block: 1, pct: 0.75, reps: 5, heavySets: 3, pressOffset: 0, squatOffset: 0, rdlOffset: 0, hicName: "Hill Sprints", ruckDuration: 40 },
+      { week: 5, block: 1, pct: 0.80, reps: 5, heavySets: 4, pressOffset: 0, squatOffset: 0, rdlOffset: 0, hicName: "Meat Eater II", ruckDuration: 55 },
+      { week: 6, block: 1, pct: 0.85, reps: 3, heavySets: 5, pressOffset: 0, squatOffset: 0, rdlOffset: 0, hicName: "Fobbit Intervals", ruckDuration: 60 },
+      // BLOCK 2 (Weeks 7-12) — Forced Progression (+5lb Press/Pull, +10lb Squat/RDL)
+      { week: 7, block: 2, pct: 0.75, reps: 5, heavySets: 3, pressOffset: 5, squatOffset: 10, rdlOffset: 10, hicName: "Hill Sprints", ruckDuration: 45 },
+      { week: 8, block: 2, pct: 0.80, reps: 5, heavySets: 4, pressOffset: 5, squatOffset: 10, rdlOffset: 10, hicName: "Meat Eater II", ruckDuration: 50 },
+      { week: 9, block: 2, pct: 0.85, reps: 3, heavySets: 5, pressOffset: 5, squatOffset: 10, rdlOffset: 10, hicName: "Fobbit Intervals", ruckDuration: 55 },
+      { week: 10, block: 2, pct: 0.75, reps: 5, heavySets: 3, pressOffset: 5, squatOffset: 10, rdlOffset: 10, hicName: "Hill Sprints", ruckDuration: 45 },
+      { week: 11, block: 2, pct: 0.80, reps: 5, heavySets: 4, pressOffset: 5, squatOffset: 10, rdlOffset: 10, hicName: "Meat Eater II", ruckDuration: 60 },
+      { week: 12, block: 2, pct: 0.85, reps: 3, heavySets: 5, pressOffset: 5, squatOffset: 10, rdlOffset: 10, hicName: "Fobbit Intervals", ruckDuration: 45 }
     ];
 
     const DAYS_CONFIG = [
-      { id: 'mon', short: 'MON', name: 'Monday', desc: 'Full Body: Bench Press (3s), Zerchers (3s), Pull-ups (3s), 100 Swings' },
-      { id: 'tue', short: 'TUE', name: 'Tuesday', desc: 'Quality Run (HIC / Intervals / Tempo)' },
-      { id: 'wed', short: 'WED', name: 'Wednesday', desc: '60m LSS (Brainless Zone 2 Run/Spin)' },
-      { id: 'thu', short: 'THU', name: 'Thursday', desc: 'Lower: Zerchers (5s), 100 Swings' },
-      { id: 'fri', short: 'FRI', name: 'Friday', desc: 'Upper: Bench Press (5s), Pull-ups (3s), Suitcase Carries' },
-      { id: 'sat', short: 'SAT', name: 'Saturday', desc: '60–90m LSS (The Anchor Long Run)' },
-      { id: 'sun', short: 'SUN', name: 'Sunday', desc: 'Protected Rest' }
+      { id: 'mon', short: 'MON', name: 'Monday', isRest: false },
+      { id: 'tue', short: 'TUE', name: 'Tuesday', isRest: false },
+      { id: 'wed', short: 'WED', name: 'Wednesday', isRest: true },
+      { id: 'thu', short: 'THU', name: 'Thursday', isRest: false },
+      { id: 'fri', short: 'FRI', name: 'Friday', isRest: false },
+      { id: 'sat', short: 'SAT', name: 'Saturday', isRest: false },
+      { id: 'sun', short: 'SUN', name: 'Sunday', isRest: true }
     ];
 
     function roundToNearest2p5(val) {
       return (Math.round(val / 2.5) * 2.5);
     }
 
-    function computeWeekLoads(weekNum, tms) {
-      const wk = WEEKS_DATA.find(x => x.week === weekNum);
+    function computeWeekLoads(weekNum, tms, bw) {
+      const wk = WEEKS_DATA.find(x => x.week === weekNum) || WEEKS_DATA[0];
       const pressTM = tms.press + wk.pressOffset;
       const squatTM = tms.squat + wk.squatOffset;
-      const pullTM = tms.pull + wk.pressOffset;
+      const rdlTM = (tms.rdl || 165) + wk.rdlOffset;
+      const pullTM = (tms.pull || 195) + wk.pressOffset;
+
+      const pullTotal = roundToNearest2p5(pullTM * wk.pct);
+      const addedLoad = pullTotal - bw;
+      const pullDisplay = addedLoad > 0 ? `+${addedLoad} lb` : "BW";
 
       return {
         press: roundToNearest2p5(pressTM * wk.pct),
         squat: roundToNearest2p5(squatTM * wk.pct),
-        pull: roundToNearest2p5(pullTM * wk.pct)
+        rdl: roundToNearest2p5(rdlTM * wk.pct),
+        pull: pullDisplay,
+        pullTotal: pullTotal
       };
     }
 
+    function createDefaultDayLogged(w, dayId) {
+      const wk = WEEKS_DATA.find(x => x.week === w) || WEEKS_DATA[0];
+      const heavySets = wk.heavySets;
+
+      if (dayId === 'mon') {
+        return { press: Array(3).fill(false), squat: Array(3).fill(false), pull: Array(3).fill(false), curls: Array(3).fill(false), lss: false, completed: false };
+      } else if (dayId === 'tue') {
+        return { hic: false, completed: false };
+      } else if (dayId === 'wed') {
+        return { completed: false };
+      } else if (dayId === 'thu') {
+        return { squat: Array(heavySets).fill(false), rdl: Array(3).fill(false), lss: false, completed: false };
+      } else if (dayId === 'fri') {
+        return { press: Array(heavySets).fill(false), pull: Array(3).fill(false), carries: Array(3).fill(false), curls: Array(2).fill(false), completed: false };
+      } else if (dayId === 'sat') {
+        return { ruck: false, completed: false };
+      } else if (dayId === 'sun') {
+        return { completed: false };
+      }
+      return { completed: false };
+    }
+
     function createDefaultState() {
+      const bw = 180;
+      const maxes = { press: 165, squat: 165, rdl: 185, pull: 215, bw: bw };
+      const tms = {
+        press: roundToNearest2p5(165 * 0.90),
+        squat: roundToNearest2p5(165 * 0.90),
+        rdl: roundToNearest2p5(185 * 0.90),
+        pull: roundToNearest2p5(215 * 0.90) // 195 lb total
+      };
+
       const state = {
-        version: 2,
+        version: 6,
         settings: {
           active_week: 1,
           active_day: "mon"
         },
-        maxes: { press: 165, squat: 165, pull: 200 },
-        tms: {
-          press: roundToNearest2p5(165 * 0.90),
-          squat: roundToNearest2p5(165 * 0.90),
-          pull: roundToNearest2p5(200 * 0.90)
-        },
+        maxes: maxes,
+        tms: tms,
         weeks: {}
       };
 
-      for (let w = 1; w <= 13; w++) {
+      for (let w = 1; w <= 12; w++) {
         state.weeks[w] = {
-          loads: computeWeekLoads(w, state.tms),
+          loads: computeWeekLoads(w, state.tms, state.maxes.bw),
           logged: {
-            mon: { press: [false, false, false], squat: [false, false, false], pull: [false, false, false], swings: false, completed: false },
-            tue: { quality: false, completed: false },
-            wed: { lss: false, completed: false },
-            thu: { squat: [false, false, false, false, false], swings: false, completed: false },
-            fri: { press: [false, false, false, false, false], pull: [false, false, false], carries: [false, false, false], completed: false },
-            sat: { lr: false, completed: false },
-            sun: { completed: false }
+            mon: createDefaultDayLogged(w, 'mon'),
+            tue: createDefaultDayLogged(w, 'tue'),
+            wed: createDefaultDayLogged(w, 'wed'),
+            thu: createDefaultDayLogged(w, 'thu'),
+            fri: createDefaultDayLogged(w, 'fri'),
+            sat: createDefaultDayLogged(w, 'sat'),
+            sun: createDefaultDayLogged(w, 'sun')
           }
         };
-        if (w === 13) {
-          state.weeks[w].logged.mon = { press: [false, false], squat: [false, false], pull: [false, false], swings: false, completed: false };
-          state.weeks[w].logged.thu = { squat: [false, false], swings: false, completed: false };
-          state.weeks[w].logged.fri = { press: [false, false], pull: [false, false], carries: [false, false], completed: false };
-          state.weeks[w].logged.sun = { race: false, completed: false };
-        }
       }
       return state;
     }
@@ -330,25 +382,29 @@
         const raw = localStorage.getItem(STORAGE_KEY);
         if (raw) {
           const parsed = JSON.parse(raw);
-          if (parsed && parsed.weeks && parsed.maxes && parsed.tms) {
+          if (parsed && parsed.version === 6 && parsed.weeks && parsed.maxes && parsed.tms) {
             appState = parsed;
           }
         }
       } catch (e) {
         console.error("State parse error:", e);
       }
-      for (let w = 1; w <= 13; w++) {
+      if (!appState.maxes.bw) appState.maxes.bw = 180;
+      if (!appState.maxes.pull) appState.maxes.pull = 215;
+      if (!appState.tms.pull) appState.tms.pull = roundToNearest2p5(appState.maxes.pull * 0.90);
+
+      for (let w = 1; w <= 12; w++) {
         if (!appState.weeks[w]) {
           appState.weeks[w] = {
-            loads: computeWeekLoads(w, appState.tms),
+            loads: computeWeekLoads(w, appState.tms, appState.maxes.bw),
             logged: {
-              mon: { press: [false, false, false], squat: [false, false, false], pull: [false, false, false], swings: false, completed: false },
-              tue: { quality: false, completed: false },
-              wed: { lss: false, completed: false },
-              thu: { squat: [false, false, false, false, false], swings: false, completed: false },
-              fri: { press: [false, false, false, false, false], pull: [false, false, false], carries: [false, false, false], completed: false },
-              sat: { lr: false, completed: false },
-              sun: { completed: false }
+              mon: createDefaultDayLogged(w, 'mon'),
+              tue: createDefaultDayLogged(w, 'tue'),
+              wed: createDefaultDayLogged(w, 'wed'),
+              thu: createDefaultDayLogged(w, 'thu'),
+              fri: createDefaultDayLogged(w, 'fri'),
+              sat: createDefaultDayLogged(w, 'sat'),
+              sun: createDefaultDayLogged(w, 'sun')
             }
           };
         }
@@ -416,33 +472,39 @@
     function updateTMDisplays() {
       document.getElementById('tmDisplayPress').innerText = `${appState.tms.press} lb`;
       document.getElementById('tmDisplaySquat').innerText = `${appState.tms.squat} lb`;
+      document.getElementById('tmDisplayRdl').innerText = `${appState.tms.rdl} lb`;
       document.getElementById('tmDisplayPull').innerText = `${appState.tms.pull} lb`;
     }
 
     function onMaxesChanged() {
+      const bw = parseFloat(document.getElementById('inputBW').value) || 180;
       const p = parseFloat(document.getElementById('input1RMPress').value) || 165;
       const s = parseFloat(document.getElementById('input1RMSquat').value) || 165;
-      const pu = parseFloat(document.getElementById('input1RMPull').value) || 200;
+      const r = parseFloat(document.getElementById('input1RMRdl').value) || 185;
+      const pu = parseFloat(document.getElementById('input1RMPull').value) || 215;
 
+      appState.maxes.bw = bw;
       appState.maxes.press = p;
       appState.maxes.squat = s;
+      appState.maxes.rdl = r;
       appState.maxes.pull = pu;
 
       appState.tms.press = roundToNearest2p5(p * 0.90);
       appState.tms.squat = roundToNearest2p5(s * 0.90);
+      appState.tms.rdl = roundToNearest2p5(r * 0.90);
       appState.tms.pull = roundToNearest2p5(pu * 0.90);
 
       updateTMDisplays();
 
       const curW = appState.settings.active_week || 1;
-      for (let w = curW; w <= 13; w++) {
+      for (let w = curW; w <= 12; w++) {
         let isPastLogged = false;
         const loggedObj = appState.weeks[w].logged;
         for (let day in loggedObj) {
           if (loggedObj[day] && loggedObj[day].completed) isPastLogged = true;
         }
         if (!isPastLogged) {
-          appState.weeks[w].loads = computeWeekLoads(w, appState.tms);
+          appState.weeks[w].loads = computeWeekLoads(w, appState.tms, appState.maxes.bw);
         }
       }
 
@@ -454,8 +516,8 @@
 
     function recalculateFutureLoads() {
       const curW = appState.settings.active_week || 1;
-      for (let w = curW; w <= 13; w++) {
-        appState.weeks[w].loads = computeWeekLoads(w, appState.tms);
+      for (let w = curW; w <= 12; w++) {
+        appState.weeks[w].loads = computeWeekLoads(w, appState.tms, appState.maxes.bw);
       }
       saveState();
       renderExecutionDashboard();
@@ -522,26 +584,28 @@
         const pressDone = wkLogged.press.every(Boolean);
         const squatDone = wkLogged.squat.every(Boolean);
         const pullDone = wkLogged.pull.every(Boolean);
-        const swingsDone = !!wkLogged.swings;
-        wkLogged.completed = pressDone && squatDone && pullDone && swingsDone;
+        const curlsDone = wkLogged.curls.every(Boolean);
+        const lssDone = !!wkLogged.lss;
+        wkLogged.completed = pressDone && squatDone && pullDone && curlsDone && lssDone;
       } else if (dayId === 'tue') {
-        wkLogged.completed = !!wkLogged.quality;
+        wkLogged.completed = !!wkLogged.hic;
       } else if (dayId === 'wed') {
-        wkLogged.completed = !!wkLogged.lss;
+        wkLogged.completed = !!wkLogged.completed;
       } else if (dayId === 'thu') {
         const squatDone = wkLogged.squat.every(Boolean);
-        const swingsDone = !!wkLogged.swings;
-        wkLogged.completed = squatDone && swingsDone;
+        const rdlDone = wkLogged.rdl.every(Boolean);
+        const lssDone = !!wkLogged.lss;
+        wkLogged.completed = squatDone && rdlDone && lssDone;
       } else if (dayId === 'fri') {
         const pressDone = wkLogged.press.every(Boolean);
         const pullDone = wkLogged.pull.every(Boolean);
         const carriesDone = wkLogged.carries.every(Boolean);
-        wkLogged.completed = pressDone && pullDone && carriesDone;
+        const curlsDone = wkLogged.curls.every(Boolean);
+        wkLogged.completed = pressDone && pullDone && carriesDone && curlsDone;
       } else if (dayId === 'sat') {
-        wkLogged.completed = !!wkLogged.lr;
+        wkLogged.completed = !!wkLogged.ruck;
       } else if (dayId === 'sun') {
-        if (w === 13) wkLogged.completed = !!wkLogged.race;
-        else wkLogged.completed = !!wkLogged.completed;
+        wkLogged.completed = !!wkLogged.completed;
       }
     }
 
@@ -557,22 +621,25 @@
         wkLogged.press = wkLogged.press.map(() => target);
         wkLogged.squat = wkLogged.squat.map(() => target);
         wkLogged.pull = wkLogged.pull.map(() => target);
-        wkLogged.swings = target;
-      } else if (dayId === 'tue') {
-        wkLogged.quality = target;
-      } else if (dayId === 'wed') {
+        wkLogged.curls = wkLogged.curls.map(() => target);
         wkLogged.lss = target;
+      } else if (dayId === 'tue') {
+        wkLogged.hic = target;
+      } else if (dayId === 'wed') {
+        // handled below
       } else if (dayId === 'thu') {
         wkLogged.squat = wkLogged.squat.map(() => target);
-        wkLogged.swings = target;
+        wkLogged.rdl = wkLogged.rdl.map(() => target);
+        wkLogged.lss = target;
       } else if (dayId === 'fri') {
         wkLogged.press = wkLogged.press.map(() => target);
         wkLogged.pull = wkLogged.pull.map(() => target);
         wkLogged.carries = wkLogged.carries.map(() => target);
+        wkLogged.curls = wkLogged.curls.map(() => target);
       } else if (dayId === 'sat') {
-        wkLogged.lr = target;
+        wkLogged.ruck = target;
       } else if (dayId === 'sun') {
-        if (w === 13) wkLogged.race = target;
+        // handled below
       }
 
       wkLogged.completed = target;
@@ -590,22 +657,13 @@
     function renderExecutionDashboard() {
       const w = appState.settings.active_week;
       const dayId = appState.settings.active_day;
-      const currentWk = WEEKS_DATA.find(x => x.week === w);
+      const currentWk = WEEKS_DATA.find(x => x.week === w) || WEEKS_DATA[0];
       const currentDay = DAYS_CONFIG.find(x => x.id === dayId);
       const wkData = appState.weeks[w];
       const wkLogged = wkData.logged[dayId];
       const loads = wkData.loads;
 
       document.getElementById('dayHeaderDay').innerText = currentDay.name;
-
-      let subtitle = currentDay.desc;
-      if (w === 13) {
-        if (dayId === 'mon') subtitle = "Shakeout: Bench (2s), Zerchers (2s), Pull-ups (2s), Swings";
-        if (dayId === 'tue') subtitle = "20m Easy Flush Jog";
-        if (dayId === 'wed' || dayId === 'thu' || dayId === 'fri' || dayId === 'sat') subtitle = "Protected Rest";
-        if (dayId === 'sun') subtitle = "Surf City Half-Marathon (13.1 mi)";
-      }
-      document.getElementById('dayHeaderSubtitle').innerText = subtitle;
 
       const dayDone = !!wkLogged.completed;
       const completeBtn = document.getElementById('dayCompleteBtn');
@@ -620,88 +678,72 @@
       const container = document.getElementById('dayExecutionDetails');
       container.innerHTML = '';
 
-      // WEEK 13 SPECIALS
-      if (w === 13 && dayId === 'sun') {
-        const done = !!wkLogged.race;
-        container.innerHTML = `
-          <button type="button" onclick="toggleGenericItem(${w}, '${dayId}', 'race')" class="min-touch w-full p-4 rounded-xl border text-sm font-mono font-bold flex items-center justify-center transition ${done ? 'bg-tn-green border-tn-green text-tn-dark font-black' : 'bg-tn-card2 border-tn-green text-tn-green'}">
-            ${done ? '✓ SURF CITY HALF MARATHON COMPLETE' : 'SURF CITY HALF MARATHON (13.1 mi)'}
-          </button>
-        `;
-        renderDayButtons();
-        return;
-      }
-
-      // REGULAR DAYS
       if (dayId === 'mon') {
-        // Monday: Full Body (3 sets each + 100 Swings)
-        const setsCount = (w === 13) ? 2 : 3;
         renderLiftingCards(container, w, dayId, loads, [
-          { key: 'press', name: 'Bench / Floor Press', load: loads.press, color: 'text-tn-green', sets: setsCount, reps: currentWk.reps },
-          { key: 'squat', name: 'Zercher Squat', load: loads.squat, color: 'text-tn-cyan', sets: setsCount, reps: currentWk.reps },
-          { key: 'pull', name: 'Ring Pull-ups', load: loads.pull, color: 'text-tn-orange', sets: setsCount, reps: currentWk.reps }
+          { key: 'press', name: 'Bench Press', load: loads.press, color: 'text-tn-green', sets: 3, reps: currentWk.reps },
+          { key: 'squat', name: 'Zercher Squat', load: loads.squat, color: 'text-tn-cyan', sets: 3, reps: currentWk.reps },
+          { key: 'pull', name: 'Ring Pull-ups', load: loads.pull, color: 'text-tn-blue', sets: 3, reps: currentWk.reps },
+          { key: 'curls', name: 'Bicep Curls', load: '2 RIR', color: 'text-tn-purple', sets: 3, reps: '8-10' }
         ]);
-        renderSwingsCard(container, w, dayId);
+        renderLssCard(container, w, dayId);
 
       } else if (dayId === 'tue') {
-        const done = !!wkLogged.quality;
+        const done = !!wkLogged.hic;
         container.innerHTML = `
-          <button type="button" onclick="toggleGenericItem(${w}, '${dayId}', 'quality')" class="min-touch w-full p-3 rounded-lg border text-xs font-mono font-bold flex items-center justify-between text-left gap-2 transition ${done ? 'bg-tn-green/20 border-tn-green text-tn-green' : 'bg-tn-card2 border-tn-border text-tn-text'}">
-            <div>
-              <span class="text-tn-subtext block text-[10px]">QUALITY RUN (HIC)</span>
-              <span>${currentWk.tueQuality}</span>
-            </div>
-            <span class="text-sm shrink-0">${done ? '✓' : 'Log'}</span>
-          </button>
+          <div class="bg-tn-card2 border border-tn-border rounded-lg p-3">
+            <button type="button" onclick="toggleGenericItem(${w}, '${dayId}', 'hic')" class="min-touch w-full p-3 rounded-lg border text-xs font-mono font-bold flex items-center justify-between transition ${done ? 'bg-tn-green border-tn-green text-tn-dark font-black' : 'bg-tn-dark border-tn-border text-white'}">
+              <span>${currentWk.hicName} (20m)</span>
+              <span class="text-sm">${done ? '✓' : 'Log'}</span>
+            </button>
+          </div>
         `;
 
       } else if (dayId === 'wed') {
-        const done = !!wkLogged.lss;
+        const done = !!wkLogged.completed;
         container.innerHTML = `
-          <button type="button" onclick="toggleGenericItem(${w}, '${dayId}', 'lss')" class="min-touch w-full p-3 rounded-lg border text-xs font-mono font-bold flex items-center justify-between transition ${done ? 'bg-tn-green/20 border-tn-green text-tn-green' : 'bg-tn-card2 border-tn-border text-tn-text'}">
-            <div>
-              <span class="text-tn-subtext block text-[10px]">RECOVERY BASE (LSS 1)</span>
-              <span>${currentWk.wedLSS}</span>
-            </div>
-            <span class="text-sm shrink-0">${done ? '✓' : 'Log'}</span>
-          </button>
+          <div class="bg-tn-card2 border border-tn-border rounded-lg p-6 text-center">
+            <span class="text-xs font-mono text-tn-muted uppercase tracking-wider block mb-3">REST</span>
+            <button type="button" onclick="toggleEntireDay()" class="min-touch px-6 py-2 rounded-lg border text-xs font-mono font-bold transition ${done ? 'bg-tn-green/20 border-tn-green text-tn-green' : 'bg-tn-dark border-tn-border text-tn-subtext'}">
+              ${done ? '✓ Rest Logged' : 'Log Rest'}
+            </button>
+          </div>
         `;
 
       } else if (dayId === 'thu') {
-        // Thursday: Lower (5 sets Zercher Squats + 100 Swings)
-        const squatSets = (w === 13) ? 2 : 5;
         renderLiftingCards(container, w, dayId, loads, [
-          { key: 'squat', name: 'Zercher Squat', load: loads.squat, color: 'text-tn-cyan', sets: squatSets, reps: currentWk.reps }
+          { key: 'squat', name: 'Zercher Squat', load: loads.squat, color: 'text-tn-cyan', sets: currentWk.heavySets, reps: currentWk.reps },
+          { key: 'rdl', name: 'Barbell RDL', load: loads.rdl, color: 'text-tn-orange', sets: 3, reps: currentWk.reps }
         ]);
-        renderSwingsCard(container, w, dayId);
+        renderLssCard(container, w, dayId);
 
       } else if (dayId === 'fri') {
-        // Friday: Upper (5 sets Bench Press + 3 sets Pull-ups + Carries)
-        const pressSets = (w === 13) ? 2 : 5;
         renderLiftingCards(container, w, dayId, loads, [
-          { key: 'press', name: 'Bench / Floor Press', load: loads.press, color: 'text-tn-green', sets: pressSets, reps: currentWk.reps },
-          { key: 'pull', name: 'Ring Pull-ups', load: loads.pull, color: 'text-tn-orange', sets: 3, reps: currentWk.reps }
+          { key: 'press', name: 'Bench Press', load: loads.press, color: 'text-tn-green', sets: currentWk.heavySets, reps: currentWk.reps },
+          { key: 'pull', name: 'Ring Pull-ups', load: loads.pull, color: 'text-tn-blue', sets: 3, reps: currentWk.reps },
+          { key: 'curls', name: 'Bicep Curls', load: '2 RIR', color: 'text-tn-purple', sets: 2, reps: '8-10' }
         ]);
         renderCarryCards(container, w, dayId);
 
       } else if (dayId === 'sat') {
-        const done = !!wkLogged.lr;
+        const done = !!wkLogged.ruck;
         container.innerHTML = `
-          <button type="button" onclick="toggleGenericItem(${w}, '${dayId}', 'lr')" class="min-touch w-full p-3 rounded-lg border text-xs font-mono font-bold flex items-center justify-between transition ${done ? 'bg-tn-green/20 border-tn-green text-tn-green' : 'bg-tn-card2 border-tn-border text-tn-text'}">
-            <div>
-              <span class="text-tn-subtext block text-[10px]">ANCHOR LONG RUN (LSS 2)</span>
-              <span>${currentWk.satLongRun}</span>
-            </div>
-            <span class="text-sm shrink-0">${done ? '✓' : 'Log'}</span>
-          </button>
+          <div class="bg-tn-card2 border border-tn-border rounded-lg p-3">
+            <button type="button" onclick="toggleGenericItem(${w}, '${dayId}', 'ruck')" class="min-touch w-full p-3 rounded-lg border text-xs font-mono font-bold flex items-center justify-between transition ${done ? 'bg-tn-green border-tn-green text-tn-dark font-black' : 'bg-tn-dark border-tn-border text-white'}">
+              <span>${currentWk.ruckDuration}m Ruck (35 lb)</span>
+              <span class="text-sm">${done ? '✓' : 'Log'}</span>
+            </button>
+          </div>
         `;
 
       } else if (dayId === 'sun') {
         const done = !!wkLogged.completed;
         container.innerHTML = `
-          <button type="button" onclick="toggleGenericItem(${w}, '${dayId}', 'completed')" class="min-touch w-full p-3 rounded-lg border text-xs font-mono font-bold flex items-center justify-center transition ${done ? 'bg-tn-green/20 border-tn-green text-tn-green' : 'bg-tn-card2 border-tn-border text-tn-subtext'}">
-            ${done ? '✓ Protected Family Rest' : 'Confirm Protected Rest'}
-          </button>
+          <div class="bg-tn-card2 border border-tn-border rounded-lg p-6 text-center">
+            <span class="text-xs font-mono text-tn-muted uppercase tracking-wider block mb-3">REST</span>
+            <button type="button" onclick="toggleEntireDay()" class="min-touch px-6 py-2 rounded-lg border text-xs font-mono font-bold transition ${done ? 'bg-tn-green/20 border-tn-green text-tn-green' : 'bg-tn-dark border-tn-border text-tn-subtext'}">
+              ${done ? '✓ Rest Logged' : 'Log Rest'}
+            </button>
+          </div>
         `;
       }
 
@@ -718,9 +760,9 @@
         let html = `
           <div class="flex items-center justify-between border-b border-tn-border/60 pb-1 mb-2">
             <span class="font-bold text-white text-xs">${lift.name}</span>
-            <span class="text-xs font-mono font-bold ${lift.color}">${lift.load} lb</span>
+            <span class="text-xs font-mono font-bold ${lift.color}">${typeof lift.load === 'number' ? lift.load + ' lb' : lift.load}</span>
           </div>
-          <div class="grid grid-cols-${lift.sets} gap-2 text-xs font-mono">
+          <div class="grid gap-2 text-xs font-mono" style="grid-template-columns: repeat(${lift.sets}, minmax(0, 1fr));">
         `;
 
         for (let s = 0; s < lift.sets; s++) {
@@ -737,18 +779,14 @@
       });
     }
 
-    function renderSwingsCard(container, w, dayId) {
+    function renderLssCard(container, w, dayId) {
       const wkLogged = appState.weeks[w].logged[dayId];
-      const done = !!wkLogged.swings;
+      const done = !!wkLogged.lss;
       const card = document.createElement('div');
       card.className = "bg-tn-card2 border border-tn-border rounded-lg p-2.5";
       card.innerHTML = `
-        <div class="flex items-center justify-between border-b border-tn-border/60 pb-1 mb-2">
-          <span class="font-bold text-white text-xs">Heavy Kettlebell Swings</span>
-          <span class="text-[10px] font-mono text-tn-subtext">28 / 32 kg</span>
-        </div>
-        <button type="button" onclick="toggleGenericItem(${w}, '${dayId}', 'swings')" class="min-touch w-full p-2.5 rounded-lg border text-xs font-mono font-bold flex items-center justify-between transition ${done ? 'bg-tn-green border-tn-green text-tn-dark font-black' : 'bg-tn-dark border-tn-border text-white'}">
-          <span>100 Swings (5 × 20 or 10 × 10 EMOM)</span>
+        <button type="button" onclick="toggleGenericItem(${w}, '${dayId}', 'lss')" class="min-touch w-full p-2.5 rounded-lg border text-xs font-mono font-bold flex items-center justify-between transition ${done ? 'bg-tn-green border-tn-green text-tn-dark font-black' : 'bg-tn-dark border-tn-border text-white'}">
+          <span>20m LSS</span>
           <span class="text-sm">${done ? '✓' : 'Log'}</span>
         </button>
       `;
@@ -762,8 +800,7 @@
 
       let html = `
         <div class="flex items-center justify-between border-b border-tn-border/60 pb-1 mb-2">
-          <span class="font-bold text-white text-xs">Double Suitcase Carry</span>
-          <span class="text-[10px] font-mono text-tn-subtext">3 × 40–50 yds (28 / 32 kg)</span>
+          <span class="font-bold text-white text-xs">Suitcase Carry</span>
         </div>
         <div class="grid grid-cols-3 gap-2 text-xs font-mono">
       `;
@@ -825,7 +862,7 @@
     function changeActiveWeekOffset(delta) {
       let newW = appState.settings.active_week + delta;
       if (newW < 1) newW = 1;
-      if (newW > 13) newW = 13;
+      if (newW > 12) newW = 12;
       appState.settings.active_week = newW;
       document.getElementById('weekSelect').value = newW;
       saveState();
@@ -835,7 +872,8 @@
 
     function renderWeeklyGrid() {
       const w = appState.settings.active_week;
-      const wk = WEEKS_DATA.find(x => x.week === w);
+      const wk = WEEKS_DATA.find(x => x.week === w) || WEEKS_DATA[0];
+      const loads = appState.weeks[w].loads;
       document.getElementById('weeklyViewWeekNum').innerText = w;
 
       const container = document.getElementById('weeklyScheduleGrid');
@@ -846,27 +884,20 @@
         const done = wkLogged && wkLogged.completed;
         let contentDesc = '';
 
-        if (w === 13) {
-          if (d.id === 'mon') contentDesc = "Shakeout: Bench (2s), Squat (2s), Pull (2s), Swings";
-          else if (d.id === 'tue') contentDesc = "20m Easy Flush";
-          else if (d.id === 'sun') contentDesc = "Surf City Half-Marathon (13.1 mi)";
-          else contentDesc = "Protected Rest";
-        } else {
-          if (d.id === 'mon') {
-            contentDesc = `Full Body (3×${wk.reps} @ ${Math.round(wk.pct*100)}%) + 100 Swings`;
-          } else if (d.id === 'tue') {
-            contentDesc = wk.tueQuality;
-          } else if (d.id === 'wed') {
-            contentDesc = wk.wedLSS;
-          } else if (d.id === 'thu') {
-            contentDesc = `Lower (5×${wk.reps} Zerchers) + 100 Swings`;
-          } else if (d.id === 'fri') {
-            contentDesc = `Upper (5×${wk.reps} Bench, 3×${wk.reps} Pulls) + Carries`;
-          } else if (d.id === 'sat') {
-            contentDesc = wk.satLongRun;
-          } else if (d.id === 'sun') {
-            contentDesc = `Protected Rest`;
-          }
+        if (d.id === 'mon') {
+          contentDesc = `Bench (${loads.press}), Zercher (${loads.squat}), Pull-ups (${loads.pull}), Curls + 20m LSS`;
+        } else if (d.id === 'tue') {
+          contentDesc = `${wk.hicName} (20m)`;
+        } else if (d.id === 'wed') {
+          contentDesc = `Rest`;
+        } else if (d.id === 'thu') {
+          contentDesc = `Zercher (${loads.squat} × ${wk.heavySets}s), RDL (${loads.rdl} × 3s) + 20m LSS`;
+        } else if (d.id === 'fri') {
+          contentDesc = `Bench (${loads.press} × ${wk.heavySets}s), Pull-ups (${loads.pull}), Carries, Curls`;
+        } else if (d.id === 'sat') {
+          contentDesc = `${wk.ruckDuration}m Ruck (35 lb)`;
+        } else if (d.id === 'sun') {
+          contentDesc = `Rest`;
         }
 
         html += `
@@ -896,11 +927,11 @@
 
       WEEKS_DATA.forEach(w => {
         const wkData = appState.weeks[w.week];
-        let daysDone = 0;
+        let trainingDaysDone = 0;
         if (wkData && wkData.logged) {
-          for (let d in wkData.logged) {
-            if (wkData.logged[d] && wkData.logged[d].completed) daysDone++;
-          }
+          ['mon', 'tue', 'thu', 'fri', 'sat'].forEach(d => {
+            if (wkData.logged[d] && wkData.logged[d].completed) trainingDaysDone++;
+          });
         }
         const isCurrent = w.week === appState.settings.active_week;
         const isExpanded = !!expandedMatrixWeeks[w.week];
@@ -911,25 +942,25 @@
             <div onclick="toggleWeekCollapse(${w.week})" class="p-2.5 bg-tn-card2 flex items-center justify-between cursor-pointer">
               <div class="flex items-center gap-2">
                 <span class="font-bold text-white">W${w.week}</span>
-                <span class="text-[10px] text-tn-subtext">${w.dates}</span>
-                ${(w.week === 4 || w.week === 8) ? '<span class="text-[9px] px-1 py-0.2 bg-tn-orange/20 text-tn-orange rounded">DELOAD</span>' : ''}
-                ${(w.week === 12 || w.week === 13) ? '<span class="text-[9px] px-1 py-0.2 bg-tn-cyan/20 text-tn-cyan rounded">TAPER</span>' : ''}
+                <span class="text-[10px] text-tn-subtext">${Math.round(w.pct*100)}% (${w.reps}r)</span>
               </div>
               <div class="flex items-center gap-2">
-                <span class="text-[11px] ${daysDone === 7 ? 'text-tn-green font-bold' : 'text-tn-muted'}">${daysDone}/7</span>
+                <span class="text-[11px] ${trainingDaysDone === 5 ? 'text-tn-green font-bold' : 'text-tn-muted'}">${trainingDaysDone}/5</span>
                 <span class="text-tn-muted">${isExpanded ? '▲' : '▼'}</span>
               </div>
             </div>
 
             ${isExpanded ? `
               <div class="p-2.5 border-t border-tn-border/60 space-y-1 bg-tn-card text-[11px]">
-                <div class="flex justify-between text-tn-subtext">
+                <div class="flex justify-between text-tn-subtext pb-1 border-b border-tn-border/40">
                   <span class="text-tn-muted">LOADS:</span>
-                  <span class="text-tn-green font-bold">@ ${Math.round(w.pct*100)}% (B: ${loads.press} / Z: ${loads.squat} / PU: ${loads.pull})</span>
+                  <span class="text-tn-green font-bold">B: ${loads.press} | Z: ${loads.squat} | RDL: ${loads.rdl} | PU: ${loads.pull}</span>
                 </div>
-                <div class="text-tn-subtext"><span class="text-tn-muted">TUE:</span> ${w.tueQuality}</div>
-                <div class="text-tn-subtext"><span class="text-tn-muted">WED:</span> ${w.wedLSS}</div>
-                <div class="text-tn-subtext"><span class="text-tn-muted">SAT:</span> ${w.satLongRun}</div>
+                <div class="text-tn-subtext"><span class="text-tn-muted">MON:</span> Full (${loads.press} / ${loads.squat} / ${loads.pull}) + Curls + 20m LSS</div>
+                <div class="text-tn-subtext"><span class="text-tn-muted">TUE:</span> ${w.hicName} (20m)</div>
+                <div class="text-tn-subtext"><span class="text-tn-muted">THU:</span> Lower (${loads.squat} × ${w.heavySets}s, ${loads.rdl} × 3s) + 20m LSS</div>
+                <div class="text-tn-subtext"><span class="text-tn-muted">FRI:</span> Upper (${loads.press} × ${w.heavySets}s, ${loads.pull} × 3s) + Carries + Curls</div>
+                <div class="text-tn-subtext"><span class="text-tn-muted">SAT:</span> ${w.ruckDuration}m Ruck (35 lb)</div>
                 <div class="pt-1 text-right">
                   <button type="button" onclick="jumpToWeek(${w.week})" class="text-tn-green hover:underline">Select Week →</button>
                 </div>
@@ -955,17 +986,17 @@
     }
 
     function updateGlobalProgress() {
-      let totalDays = 13 * 7;
+      let totalTrainingDays = 12 * 5;
       let completedCount = 0;
-      for (let w = 1; w <= 13; w++) {
+      for (let w = 1; w <= 12; w++) {
         const wk = appState.weeks[w];
         if (wk && wk.logged) {
-          for (let d in wk.logged) {
+          ['mon', 'tue', 'thu', 'fri', 'sat'].forEach(d => {
             if (wk.logged[d] && wk.logged[d].completed) completedCount++;
-          }
+          });
         }
       }
-      const pct = Math.round((completedCount / totalDays) * 100);
+      const pct = Math.round((completedCount / totalTrainingDays) * 100);
       document.getElementById('globalProgressPercent').innerText = `${pct}%`;
     }
 
@@ -995,10 +1026,11 @@
 
       const presetButtons = document.querySelectorAll('#timerPresetsContainer button');
       presetButtons.forEach(btn => {
-        if (btn.innerText === `${seconds}s`) {
-          btn.className = "min-touch px-2 py-1 rounded bg-tn-green/20 text-tn-green font-bold border border-tn-green/40";
+        const label = `${seconds / 60}m`;
+        if (btn.innerText === label) {
+          btn.className = "min-touch px-2.5 py-1 rounded bg-tn-green/20 text-tn-green font-bold border border-tn-green/40";
         } else {
-          btn.className = "min-touch px-2 py-1 rounded bg-tn-card2 text-tn-subtext border border-tn-border";
+          btn.className = "min-touch px-2.5 py-1 rounded bg-tn-card2 text-tn-subtext border border-tn-border";
         }
       });
       triggerHaptic(15);
@@ -1064,13 +1096,6 @@
       }
     }
 
-    function updateCountdown() {
-      const now = new Date();
-      const diffTime = TARGET_DATE - now;
-      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-      document.getElementById('countdownDisplay').innerText = `${diffDays > 0 ? diffDays : 0}D`;
-    }
-
     // --- IMPORT / EXPORT / RESET ---
     function exportData() {
       const cleanJson = JSON.stringify(appState, null, 2);
@@ -1078,7 +1103,7 @@
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = `op_ulf_black_${new Date().toISOString().slice(0,10)}.json`;
+      a.download = `sentinel_op_flu_${new Date().toISOString().slice(0,10)}.json`;
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
@@ -1126,19 +1151,18 @@
       WEEKS_DATA.forEach(w => {
         const opt = document.createElement('option');
         opt.value = w.week;
-        opt.innerText = `Week ${w.week}`;
+        opt.innerText = `Week ${w.week} (Block ${w.block})`;
         if (w.week === (appState.settings.active_week || 1)) opt.selected = true;
         sel.appendChild(opt);
       });
 
+      document.getElementById('inputBW').value = appState.maxes.bw || 180;
       document.getElementById('input1RMPress').value = appState.maxes.press || 165;
       document.getElementById('input1RMSquat').value = appState.maxes.squat || 165;
-      document.getElementById('input1RMPull').value = appState.maxes.pull || 200;
+      document.getElementById('input1RMRdl').value = appState.maxes.rdl || 185;
+      document.getElementById('input1RMPull').value = appState.maxes.pull || 215;
 
       updateTMDisplays();
-      updateCountdown();
-      setInterval(updateCountdown, 60000);
-
       updateTimerDisplay();
       renderExecutionDashboard();
       renderWeeklyGrid();
