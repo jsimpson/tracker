@@ -455,6 +455,7 @@
 
       for (let w = 1; w <= 6; w++) {
         const savedWeek = state.weeks[w];
+        normalized.weeks[w].loads = computeWeekLoads(w, normalized.tms, normalized.maxes);
         DAYS_CONFIG.forEach(day => {
           normalized.weeks[w].logged[day.id] = normalizeDayLogged(w, day.id, savedWeek?.logged?.[day.id]);
         });
