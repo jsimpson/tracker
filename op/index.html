@@ -63,6 +63,7 @@
       <div class="flex items-center gap-2">
         <span class="text-xs font-mono font-bold tracking-widest text-tn-green uppercase">Op/FLU</span>
         <span class="text-[10px] px-1.5 py-0.5 rounded bg-tn-blue/15 text-tn-blue font-mono border border-tn-blue/30 font-bold">POLARIZED BLUE</span>
+        <span id="headerCycleLabel" class="text-[10px] font-mono text-tn-subtext">CYCLE 1</span>
       </div>
       <div class="flex items-center gap-2 font-mono text-[11px]">
         <button type="button" onclick="toggleWakeLock()" class="px-2 py-1 rounded border border-tn-border bg-tn-dark text-[10px] text-tn-muted flex items-center gap-1.5">
@@ -121,7 +122,7 @@
     <!-- VIEW 2: WEEKLY SCHEDULE -->
     <section id="view-weekly" class="hidden space-y-2.5 w-full">
       <div class="flex items-center justify-between bg-tn-card border border-tn-border p-2.5 rounded-xl">
-        <h2 class="text-xs font-mono font-bold text-white uppercase">WEEK <span id="weeklyViewWeekNum">1</span></h2>
+        <h2 class="text-xs font-mono font-bold text-white uppercase">CYCLE <span id="weeklyCycleNum">1</span> — WEEK <span id="weeklyViewWeekNum">1</span></h2>
         <div class="flex items-center gap-1">
           <button type="button" onclick="changeActiveWeekOffset(-1)" class="min-touch px-3 py-1 bg-tn-dark border border-tn-border rounded text-xs font-mono text-tn-text">←</button>
           <button type="button" onclick="changeActiveWeekOffset(1)" class="min-touch px-3 py-1 bg-tn-dark border border-tn-border rounded text-xs font-mono text-tn-text">→</button>
@@ -132,10 +133,10 @@
       </div>
     </section>
 
-    <!-- VIEW 3: 12-WEEK MATRIX -->
+    <!-- VIEW 3: 6-WEEK CYCLE MATRIX -->
     <section id="view-matrix" class="hidden space-y-2 w-full">
       <div class="bg-tn-card border border-tn-border p-2.5 rounded-xl flex items-center justify-between">
-        <span class="text-xs font-mono font-bold text-white uppercase">12-WEEK MASTER MATRIX</span>
+        <span class="text-xs font-mono font-bold text-white uppercase">CYCLE <span id="matrixCycleNum">1</span> — 6-WEEK MATRIX</span>
         <span class="text-[10px] font-mono text-tn-muted">Op/FLU + Blue</span>
       </div>
       <div class="space-y-1.5" id="collapsibleMatrixContainer">
@@ -233,6 +234,7 @@
           </label>
           <button type="button" onclick="showResetModal()" class="min-touch px-2 py-1.5 text-tn-coral hover:underline font-bold">Reset</button>
         </div>
+        <button type="button" onclick="showCycleProgressModal()" class="min-touch w-full px-3 py-2 bg-tn-green text-tn-dark rounded-lg font-mono text-xs font-bold">Complete Cycle &amp; Force Progress</button>
       </div>
     </section>
 
@@ -244,6 +246,17 @@
         <div class="flex gap-2 justify-end pt-2">
           <button type="button" onclick="hideResetModal()" class="min-touch px-3 py-1.5 rounded bg-tn-dark border border-tn-border text-white">Cancel</button>
           <button type="button" onclick="executeReset()" class="min-touch px-3 py-1.5 rounded bg-tn-coral text-tn-dark font-bold">Reset</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="cycleProgressModal" class="hidden fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4">
+      <div class="bg-tn-card border border-tn-border rounded-xl p-4 max-w-xs w-full space-y-3 font-mono text-xs">
+        <h3 class="font-bold text-tn-green text-sm uppercase">Complete Cycle?</h3>
+        <p class="text-tn-subtext">This starts the next cycle, resets all six weeks, and adds +5 lb to Bench and Pull-ups plus +10 lb to Zercher and RDL 1RMs.</p>
+        <div class="flex gap-2 justify-end pt-2">
+          <button type="button" onclick="hideCycleProgressModal()" class="min-touch px-3 py-1.5 rounded bg-tn-dark border border-tn-border text-white">Cancel</button>
+          <button type="button" onclick="completeCycleAndProgress()" class="min-touch px-3 py-1.5 rounded bg-tn-green text-tn-dark font-bold">Start Next Cycle</button>
         </div>
       </div>
     </div>
@@ -273,26 +286,16 @@
 
   <script>
     // --- PROTOCOL SPECIFICATION: Op/FLU + Polarized/Blue ---
-    const STORAGE_KEY = "sentinel_op_flu_blue_v8";
+    const STORAGE_KEY = "sentinel_op_flu_blue_v9";
 
-    // 12 Weeks (Two 6-Week TB Waves, Set Waving: 3s -> 4s -> 5s -> 3s -> 4s -> 5s, +5lb Press/Pull, +10lb Squat/RDL in Block 2)
-    // Tuesday alternates between 30–60m LSS and 20m HIC (Hill Sprints, Meat Eater II, Fobbits)
-    // Saturday is 60–90m LSS throughout
+    // Perpetual six-week TB cycle: two 3-week waves with alternating conditioning.
     const WEEKS_DATA = [
-      // BLOCK 1 (Weeks 1-6)
-      { week: 1, block: 1, pct: 0.75, reps: 5, heavySets: 3, pressOffset: 0, squatOffset: 0, rdlOffset: 0, tueType: "lss", tueDesc: "30–60m LSS", satDesc: "60–90m LSS" },
-      { week: 2, block: 1, pct: 0.80, reps: 5, heavySets: 4, pressOffset: 0, squatOffset: 0, rdlOffset: 0, tueType: "hic", tueDesc: "Hill Sprints (20m)", satDesc: "60–90m LSS" },
-      { week: 3, block: 1, pct: 0.85, reps: 3, heavySets: 5, pressOffset: 0, squatOffset: 0, rdlOffset: 0, tueType: "lss", tueDesc: "30–60m LSS", satDesc: "60–90m LSS" },
-      { week: 4, block: 1, pct: 0.75, reps: 5, heavySets: 3, pressOffset: 0, squatOffset: 0, rdlOffset: 0, tueType: "hic", tueDesc: "Meat Eater II (20m)", satDesc: "60–90m LSS" },
-      { week: 5, block: 1, pct: 0.80, reps: 5, heavySets: 4, pressOffset: 0, squatOffset: 0, rdlOffset: 0, tueType: "lss", tueDesc: "30–60m LSS", satDesc: "60–90m LSS" },
-      { week: 6, block: 1, pct: 0.85, reps: 3, heavySets: 5, pressOffset: 0, squatOffset: 0, rdlOffset: 0, tueType: "hic", tueDesc: "Fobbit Intervals (20m)", satDesc: "60–90m LSS" },
-      // BLOCK 2 (Weeks 7-12) — Forced Progression (+5lb Press/Pull, +10lb Squat/RDL)
-      { week: 7, block: 2, pct: 0.75, reps: 5, heavySets: 3, pressOffset: 5, squatOffset: 10, rdlOffset: 10, tueType: "lss", tueDesc: "30–60m LSS", satDesc: "60–90m LSS" },
-      { week: 8, block: 2, pct: 0.80, reps: 5, heavySets: 4, pressOffset: 5, squatOffset: 10, rdlOffset: 10, tueType: "hic", tueDesc: "Hill Sprints (20m)", satDesc: "60–90m LSS" },
-      { week: 9, block: 2, pct: 0.85, reps: 3, heavySets: 5, pressOffset: 5, squatOffset: 10, rdlOffset: 10, tueType: "lss", tueDesc: "30–60m LSS", satDesc: "60–90m LSS" },
-      { week: 10, block: 2, pct: 0.75, reps: 5, heavySets: 3, pressOffset: 5, squatOffset: 10, rdlOffset: 10, tueType: "hic", tueDesc: "Meat Eater II (20m)", satDesc: "60–90m LSS" },
-      { week: 11, block: 2, pct: 0.80, reps: 5, heavySets: 4, pressOffset: 5, squatOffset: 10, rdlOffset: 10, tueType: "lss", tueDesc: "30–60m LSS", satDesc: "60–90m LSS" },
-      { week: 12, block: 2, pct: 0.85, reps: 3, heavySets: 5, pressOffset: 5, squatOffset: 10, rdlOffset: 10, tueType: "hic", tueDesc: "Fobbit Intervals (20m)", satDesc: "60–90m LSS" }
+      { week: 1, pct: 0.75, reps: 5, heavySets: 3, tueDesc: "30–60m LSS", satDesc: "60–90m LSS" },
+      { week: 2, pct: 0.80, reps: 5, heavySets: 4, tueDesc: "Hill Sprints (20m)", satDesc: "60–90m LSS" },
+      { week: 3, pct: 0.85, reps: 3, heavySets: 5, tueDesc: "30–60m LSS", satDesc: "60–90m LSS" },
+      { week: 4, pct: 0.75, reps: 5, heavySets: 3, tueDesc: "Meat Eater II (20m)", satDesc: "60–90m LSS" },
+      { week: 5, pct: 0.80, reps: 5, heavySets: 4, tueDesc: "30–60m LSS", satDesc: "60–90m LSS" },
+      { week: 6, pct: 0.85, reps: 3, heavySets: 5, tueDesc: "Fobbit Intervals (20m)", satDesc: "60–90m LSS" }
     ];
 
     const DAYS_CONFIG = [
@@ -309,19 +312,22 @@
       return Math.round(val / 5) * 5;
     }
 
+    function roundToNearest2p5(val) {
+      return Math.round(val / 2.5) * 2.5;
+    }
+
     function computeWeekLoads(weekNum, tms, maxes) {
       const wk = WEEKS_DATA.find(x => x.week === weekNum) || WEEKS_DATA[0];
-      const pressTM = tms.press + wk.pressOffset;
-      const squatTM = tms.squat + wk.squatOffset;
-      const rdlTM = tms.rdl + wk.rdlOffset;
+      const pressTM = tms.press;
+      const squatTM = tms.squat;
+      const rdlTM = tms.rdl;
 
       // Supplemental paused 5x5 bench repeats 60%, 60%, then 65%.
       const backoffPct = weekNum % 3 === 0 ? 0.65 : 0.60;
       const pressBackoff = roundToNearest5(pressTM * backoffPct);
 
       // Weighted Pull-up calculation using Total 1RM (BW + Belt)
-      const pull1RM = maxes.pull + wk.pressOffset;
-      const pullTotal = roundToNearest5(pull1RM * wk.pct);
+      const pullTotal = roundToNearest2p5(maxes.pull * wk.pct);
       const addedLoad = pullTotal - maxes.bw;
 
       let pullDisplay = "";
@@ -370,16 +376,17 @@
 
     function createDefaultState() {
       const bw = 180;
-      const maxes = { bw: bw, pullRepMax: 12, pull: 245, press: 165, squat: 165, rdl: 185 };
+      const maxes = { bw: bw, pullRepMax: 12, pull: 225, press: 165, squat: 165, rdl: 185 };
       const tms = {
-        press: roundToNearest5(245 * 0.90),
-        squat: roundToNearest5(245 * 0.90),
-        rdl: roundToNearest5(245 * 0.90)
+        press: roundToNearest5(maxes.press * 0.90),
+        squat: roundToNearest5(maxes.squat * 0.90),
+        rdl: roundToNearest5(maxes.rdl * 0.90)
       };
 
       const state = {
-        version: 8,
+        version: 9,
         settings: {
+          cycle_number: 1,
           active_week: 1,
           active_day: "mon"
         },
@@ -388,7 +395,7 @@
         weeks: {}
       };
 
-      for (let w = 1; w <= 12; w++) {
+      for (let w = 1; w <= 6; w++) {
         state.weeks[w] = {
           loads: computeWeekLoads(w, state.tms, state.maxes),
           logged: {
@@ -429,8 +436,10 @@
       }
 
       const normalized = createDefaultState();
-      normalized.version = 8;
-      normalized.settings.active_week = Number.isInteger(state.settings?.active_week) && state.settings.active_week >= 1 && state.settings.active_week <= 12
+      normalized.settings.cycle_number = Number.isInteger(state.settings?.cycle_number) && state.settings.cycle_number >= 1
+        ? state.settings.cycle_number
+        : normalized.settings.cycle_number;
+      normalized.settings.active_week = Number.isInteger(state.settings?.active_week) && state.settings.active_week >= 1 && state.settings.active_week <= 6
         ? state.settings.active_week
         : normalized.settings.active_week;
       normalized.settings.active_day = DAYS_CONFIG.some(day => day.id === state.settings?.active_day)
@@ -444,56 +453,29 @@
         if (Number.isFinite(state.tms[key]) && state.tms[key] > 0) normalized.tms[key] = state.tms[key];
       });
 
-      for (let w = 1; w <= 12; w++) {
+      for (let w = 1; w <= 6; w++) {
         const savedWeek = state.weeks[w];
         DAYS_CONFIG.forEach(day => {
           normalized.weeks[w].logged[day.id] = normalizeDayLogged(w, day.id, savedWeek?.logged?.[day.id]);
         });
-        if (savedWeek?.loads && typeof savedWeek.loads === 'object') {
-          normalized.weeks[w].loads = { ...normalized.weeks[w].loads, ...savedWeek.loads };
-        }
       }
       return normalized;
     }
 
     function loadState() {
       try {
-        const raw = localStorage.getItem(STORAGE_KEY) || localStorage.getItem("sentinel_op_flu_blue_v7");
+        const raw = localStorage.getItem(STORAGE_KEY) || localStorage.getItem("sentinel_op_flu_blue_v8") || localStorage.getItem("sentinel_op_flu_blue_v7");
         if (raw) {
           const parsed = JSON.parse(raw);
-          if (parsed && (parsed.version === 8 || parsed.version === 7) && parsed.weeks && parsed.maxes && parsed.tms) {
+          if (parsed && parsed.weeks && parsed.maxes && parsed.tms) {
             appState = normalizeState(parsed);
+            saveState();
           }
         }
       } catch (e) {
         console.error("State parse error:", e);
       }
 
-      for (let w = 1; w <= 12; w++) {
-        if (!appState.weeks[w]) {
-          appState.weeks[w] = {
-            loads: computeWeekLoads(w, appState.tms, appState.maxes),
-            logged: {
-              mon: createDefaultDayLogged(w, 'mon'),
-              tue: createDefaultDayLogged(w, 'tue'),
-              wed: createDefaultDayLogged(w, 'wed'),
-              thu: createDefaultDayLogged(w, 'thu'),
-              fri: createDefaultDayLogged(w, 'fri'),
-              sat: createDefaultDayLogged(w, 'sat'),
-              sun: createDefaultDayLogged(w, 'sun')
-            }
-          };
-        } else {
-          // Ensure pressBackoff exists when migrating from v7
-          if (!appState.weeks[w].loads.pressBackoff) {
-            appState.weeks[w].loads = computeWeekLoads(w, appState.tms, appState.maxes);
-          }
-          if (appState.weeks[w].logged && appState.weeks[w].logged.fri && !appState.weeks[w].logged.fri.pressBackoff) {
-            appState.weeks[w].logged.fri.pressBackoff = Array(5).fill(false);
-            checkDayCompletionStatus(w, 'fri');
-          }
-        }
-      }
     }
 
     function isTrainingWeekComplete(w) {
@@ -502,7 +484,7 @@
     }
 
     function recalculateIncompleteLoads() {
-      for (let w = 1; w <= 12; w++) {
+      for (let w = 1; w <= 6; w++) {
         if (!isTrainingWeekComplete(w)) {
           appState.weeks[w].loads = computeWeekLoads(w, appState.tms, appState.maxes);
         }
@@ -622,6 +604,57 @@
       renderMatrixView();
       triggerHaptic(25);
       playBeep(880, 0.08);
+    }
+
+    function showCycleProgressModal() {
+      document.getElementById('cycleProgressModal').classList.remove('hidden');
+    }
+
+    function hideCycleProgressModal() {
+      document.getElementById('cycleProgressModal').classList.add('hidden');
+    }
+
+    function completeCycleAndProgress() {
+      appState.maxes.press += 5;
+      appState.maxes.pull += 5;
+      appState.maxes.squat += 10;
+      appState.maxes.rdl += 10;
+      appState.tms.press = roundToNearest5(appState.maxes.press * 0.90);
+      appState.tms.squat = roundToNearest5(appState.maxes.squat * 0.90);
+      appState.tms.rdl = roundToNearest5(appState.maxes.rdl * 0.90);
+      appState.settings.cycle_number += 1;
+      appState.settings.active_week = 1;
+      appState.settings.active_day = 'mon';
+
+      for (let w = 1; w <= 6; w++) {
+        appState.weeks[w] = {
+          loads: computeWeekLoads(w, appState.tms, appState.maxes),
+          logged: {
+            mon: createDefaultDayLogged(w, 'mon'),
+            tue: createDefaultDayLogged(w, 'tue'),
+            wed: createDefaultDayLogged(w, 'wed'),
+            thu: createDefaultDayLogged(w, 'thu'),
+            fri: createDefaultDayLogged(w, 'fri'),
+            sat: createDefaultDayLogged(w, 'sat'),
+            sun: createDefaultDayLogged(w, 'sun')
+          }
+        };
+      }
+
+      document.getElementById('input1RMPress').value = appState.maxes.press;
+      document.getElementById('input1RMPull').value = appState.maxes.pull;
+      document.getElementById('input1RMSquat').value = appState.maxes.squat;
+      document.getElementById('input1RMRdl').value = appState.maxes.rdl;
+      renderWeekSelector();
+      hideCycleProgressModal();
+      updateTMDisplays();
+      saveState();
+      renderExecutionDashboard();
+      renderWeeklyGrid();
+      renderMatrixView();
+      updateGlobalProgress();
+      triggerHaptic(60);
+      playBeep(1047, 0.12);
     }
 
     // --- CHECKLIST & SET LOGGING ---
@@ -953,6 +986,19 @@
       renderExecutionDashboard();
     }
 
+    function renderWeekSelector() {
+      const sel = document.getElementById('weekSelect');
+      document.getElementById('headerCycleLabel').innerText = `CYCLE ${appState.settings.cycle_number}`;
+      sel.innerHTML = '';
+      WEEKS_DATA.forEach(w => {
+        const opt = document.createElement('option');
+        opt.value = w.week;
+        opt.innerText = `Cycle ${appState.settings.cycle_number} — Week ${w.week}`;
+        opt.selected = w.week === appState.settings.active_week;
+        sel.appendChild(opt);
+      });
+    }
+
     function onWeekChange(val) {
       appState.settings.active_week = parseInt(val, 10);
       triggerHaptic(15);
@@ -964,7 +1010,7 @@
     function changeActiveWeekOffset(delta) {
       let newW = appState.settings.active_week + delta;
       if (newW < 1) newW = 1;
-      if (newW > 12) newW = 12;
+      if (newW > 6) newW = 6;
       appState.settings.active_week = newW;
       document.getElementById('weekSelect').value = newW;
       saveState();
@@ -976,6 +1022,7 @@
       const w = appState.settings.active_week;
       const wk = WEEKS_DATA.find(x => x.week === w) || WEEKS_DATA[0];
       const loads = appState.weeks[w].loads;
+      document.getElementById('weeklyCycleNum').innerText = appState.settings.cycle_number;
       document.getElementById('weeklyViewWeekNum').innerText = w;
 
       const container = document.getElementById('weeklyScheduleGrid');
@@ -1025,6 +1072,7 @@
 
     function renderMatrixView() {
       const container = document.getElementById('collapsibleMatrixContainer');
+      document.getElementById('matrixCycleNum').innerText = appState.settings.cycle_number;
       let html = '';
 
       WEEKS_DATA.forEach(w => {
@@ -1072,6 +1120,10 @@
         `;
       });
 
+      html += `
+        <button type="button" onclick="showCycleProgressModal()" class="min-touch w-full px-3 py-2 bg-tn-green text-tn-dark rounded-lg font-mono text-xs font-bold">Complete Cycle &amp; Force Progress</button>
+      `;
+
       container.innerHTML = html;
     }
 
@@ -1088,10 +1140,10 @@
     }
 
     function updateGlobalProgress() {
-      // 5 training days per week across 12 weeks = 60 total training sessions
-      let totalTrainingDays = 12 * 5;
+      // 5 training days per week across the active 6-week cycle = 30 sessions.
+      let totalTrainingDays = 6 * 5;
       let completedCount = 0;
-      for (let w = 1; w <= 12; w++) {
+      for (let w = 1; w <= 6; w++) {
         const wk = appState.weeks[w];
         if (wk && wk.logged) {
           ['mon', 'tue', 'thu', 'fri', 'sat'].forEach(d => {
@@ -1250,15 +1302,7 @@
     window.onload = function() {
       loadState();
 
-      const sel = document.getElementById('weekSelect');
-      sel.innerHTML = '';
-      WEEKS_DATA.forEach(w => {
-        const opt = document.createElement('option');
-        opt.value = w.week;
-        opt.innerText = `Week ${w.week} (Block ${w.block})`;
-        if (w.week === (appState.settings.active_week || 1)) opt.selected = true;
-        sel.appendChild(opt);
-      });
+      renderWeekSelector();
 
       document.getElementById('inputBW').value = appState.maxes.bw || 180;
       document.getElementById('inputPullRepMax').value = appState.maxes.pullRepMax || 12;
