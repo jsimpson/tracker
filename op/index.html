@@ -306,7 +306,7 @@
     ];
 
     function roundToNearest2p5(val) {
-      return (Math.round(val / 2.5) * 2.5);
+      return Math.round(val / 5) * 5;
     }
 
     function computeWeekLoads(weekNum, tms, maxes) {
@@ -315,9 +315,9 @@
       const squatTM = tms.squat + wk.squatOffset;
       const rdlTM = (tms.rdl || 165) + wk.rdlOffset;
 
-      // Supplemental 5x5 Bench @ 60–65% of TM
-      const backoffLow = roundToNearest2p5(pressTM * 0.60);
-      const backoffHigh = roundToNearest2p5(pressTM * 0.65);
+        // Supplemental paused 5x5 bench repeats 60%, 60%, then 65%.
+        const backoffPct = weekNum % 3 === 0 ? 0.65 : 0.60;
+        const pressBackoff = roundToNearest2p5(pressTM * backoffPct);
 
       // Weighted Pull-up calculation using Total 1RM (BW + Belt)
       const pull1RM = (maxes.pull || 225) + wk.pressOffset;
@@ -338,7 +338,7 @@
 
       return {
         press: roundToNearest2p5(pressTM * wk.pct),
-        pressBackoff: `${backoffLow}–${backoffHigh} lb`,
+        pressBackoff: `${pressBackoff} lb`,
         squat: roundToNearest2p5(squatTM * wk.pct),
         rdl: roundToNearest2p5(rdlTM * wk.pct),
         pull: pullDisplay,
