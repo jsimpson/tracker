@@ -148,7 +148,7 @@
       <div class="bg-tn-card border border-tn-border rounded-xl p-3.5 space-y-3">
         <div class="flex items-center justify-between border-b border-tn-border/60 pb-2">
           <h2 class="text-xs font-mono font-bold text-white uppercase tracking-wider">1RM, Rep Max & Maxes</h2>
-          <button type="button" onclick="recalculateFutureLoads()" class="text-[10px] font-mono text-tn-green hover:underline">Recalc Loads</button>
+          <button type="button" onclick="recalculateFutureLoads()" class="text-[10px] font-mono text-tn-green hover:underline">Recalc Incomplete</button>
         </div>
 
         <div class="space-y-2">
@@ -305,7 +305,7 @@
       { id: 'sun', short: 'SUN', name: 'Sunday', isRest: true }
     ];
 
-    function roundToNearest2p5(val) {
+    function roundToNearest5(val) {
       return Math.round(val / 5) * 5;
     }
 
@@ -313,15 +313,15 @@
       const wk = WEEKS_DATA.find(x => x.week === weekNum) || WEEKS_DATA[0];
       const pressTM = tms.press + wk.pressOffset;
       const squatTM = tms.squat + wk.squatOffset;
-      const rdlTM = (tms.rdl || 165) + wk.rdlOffset;
+      const rdlTM = tms.rdl + wk.rdlOffset;
 
-        // Supplemental paused 5x5 bench repeats 60%, 60%, then 65%.
-        const backoffPct = weekNum % 3 === 0 ? 0.65 : 0.60;
-        const pressBackoff = roundToNearest2p5(pressTM * backoffPct);
+      // Supplemental paused 5x5 bench repeats 60%, 60%, then 65%.
+      const backoffPct = weekNum % 3 === 0 ? 0.65 : 0.60;
+      const pressBackoff = roundToNearest5(pressTM * backoffPct);
 
       // Weighted Pull-up calculation using Total 1RM (BW + Belt)
-      const pull1RM = (maxes.pull || 225) + wk.pressOffset;
-      const pullTotal = roundToNearest2p5(pull1RM * wk.pct);
+      const pull1RM = maxes.pull + wk.pressOffset;
+      const pullTotal = roundToNearest5(pull1RM * wk.pct);
       const addedLoad = pullTotal - maxes.bw;
 
       let pullDisplay = "";
@@ -332,15 +332,14 @@
         pullReps = wk.reps;
       } else {
         pullDisplay = "BW";
-        const repMax = maxes.pullRepMax || 12;
-        pullReps = Math.max(1, Math.round(wk.pct * repMax));
+        pullReps = Math.max(1, Math.round(wk.pct * maxes.pullRepMax));
       }
 
       return {
-        press: roundToNearest2p5(pressTM * wk.pct),
+        press: roundToNearest5(pressTM * wk.pct),
         pressBackoff: `${pressBackoff} lb`,
-        squat: roundToNearest2p5(squatTM * wk.pct),
-        rdl: roundToNearest2p5(rdlTM * wk.pct),
+        squat: roundToNearest5(squatTM * wk.pct),
+        rdl: roundToNearest5(rdlTM * wk.pct),
         pull: pullDisplay,
         pullReps: pullReps,
         pullTotal: pullTotal
@@ -371,11 +370,11 @@
 
     function createDefaultState() {
       const bw = 180;
-      const maxes = { bw: bw, pullRepMax: 12, pull: 225, press: 165, squat: 165, rdl: 185 };
+      const maxes = { bw: bw, pullRepMax: 12, pull: 245, press: 165, squat: 165, rdl: 185 };
       const tms = {
-        press: roundToNearest2p5(165 * 0.90),
-        squat: roundToNearest2p5(165 * 0.90),
-        rdl: roundToNearest2p5(185 * 0.90)
+        press: roundToNearest5(245 * 0.90),
+        squat: roundToNearest5(245 * 0.90),
+        rdl: roundToNearest5(245 * 0.90)
       };
 
       const state = {
@@ -408,22 +407,67 @@
 
     let appState = createDefaultState();
 
+    function normalizeDayLogged(w, dayId, logged) {
+      const defaults = createDefaultDayLogged(w, dayId);
+      if (!logged || typeof logged !== 'object') return defaults;
+
+      Object.keys(defaults).forEach(key => {
+        if (Array.isArray(defaults[key])) {
+          if (Array.isArray(logged[key]) && logged[key].length === defaults[key].length) {
+            defaults[key] = logged[key].map(Boolean);
+          }
+        } else if (typeof defaults[key] === 'boolean' && typeof logged[key] === 'boolean') {
+          defaults[key] = logged[key];
+        }
+      });
+      return defaults;
+    }
+
+    function normalizeState(state) {
+      if (!state || typeof state !== 'object' || !state.weeks || !state.maxes || !state.tms) {
+        return createDefaultState();
+      }
+
+      const normalized = createDefaultState();
+      normalized.version = 8;
+      normalized.settings.active_week = Number.isInteger(state.settings?.active_week) && state.settings.active_week >= 1 && state.settings.active_week <= 12
+        ? state.settings.active_week
+        : normalized.settings.active_week;
+      normalized.settings.active_day = DAYS_CONFIG.some(day => day.id === state.settings?.active_day)
+        ? state.settings.active_day
+        : normalized.settings.active_day;
+
+      Object.keys(normalized.maxes).forEach(key => {
+        if (Number.isFinite(state.maxes[key]) && state.maxes[key] > 0) normalized.maxes[key] = state.maxes[key];
+      });
+      Object.keys(normalized.tms).forEach(key => {
+        if (Number.isFinite(state.tms[key]) && state.tms[key] > 0) normalized.tms[key] = state.tms[key];
+      });
+
+      for (let w = 1; w <= 12; w++) {
+        const savedWeek = state.weeks[w];
+        DAYS_CONFIG.forEach(day => {
+          normalized.weeks[w].logged[day.id] = normalizeDayLogged(w, day.id, savedWeek?.logged?.[day.id]);
+        });
+        if (savedWeek?.loads && typeof savedWeek.loads === 'object') {
+          normalized.weeks[w].loads = { ...normalized.weeks[w].loads, ...savedWeek.loads };
+        }
+      }
+      return normalized;
+    }
+
     function loadState() {
       try {
         const raw = localStorage.getItem(STORAGE_KEY) || localStorage.getItem("sentinel_op_flu_blue_v7");
         if (raw) {
           const parsed = JSON.parse(raw);
           if (parsed && (parsed.version === 8 || parsed.version === 7) && parsed.weeks && parsed.maxes && parsed.tms) {
-            appState = parsed;
-            appState.version = 8;
+            appState = normalizeState(parsed);
           }
         }
       } catch (e) {
         console.error("State parse error:", e);
       }
-      if (!appState.maxes.bw) appState.maxes.bw = 180;
-      if (!appState.maxes.pullRepMax) appState.maxes.pullRepMax = 12;
-      if (!appState.maxes.pull) appState.maxes.pull = 225;
 
       for (let w = 1; w <= 12; w++) {
         if (!appState.weeks[w]) {
@@ -452,6 +496,19 @@
       }
     }
 
+    function isTrainingWeekComplete(w) {
+      const logged = appState.weeks[w].logged;
+      return ['mon', 'tue', 'thu', 'fri', 'sat'].every(day => logged[day].completed);
+    }
+
+    function recalculateIncompleteLoads() {
+      for (let w = 1; w <= 12; w++) {
+        if (!isTrainingWeekComplete(w)) {
+          appState.weeks[w].loads = computeWeekLoads(w, appState.tms, appState.maxes);
+        }
+      }
+    }
+
     function saveState() {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(appState));
     }
@@ -468,19 +525,29 @@
       return audioCtx;
     }
 
-    function playBeep(freq = 784, duration = 0.05) {
+    function playBeep(freq = 784, duration = 0.05, startAt, volume = 0.12, waveform = 'sine') {
       try {
         const ctx = getAudioCtx();
         const osc = ctx.createOscillator();
         const gain = ctx.createGain();
-        osc.type = 'sine';
-        osc.frequency.setValueAtTime(freq, ctx.currentTime);
-        gain.gain.setValueAtTime(0.12, ctx.currentTime);
-        gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + duration);
+        const startTime = startAt ?? ctx.currentTime;
+        osc.type = waveform;
+        osc.frequency.setValueAtTime(freq, startTime);
+        gain.gain.setValueAtTime(volume, startTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, startTime + duration);
         osc.connect(gain);
         gain.connect(ctx.destination);
-        osc.start();
-        osc.stop(ctx.currentTime + duration);
+        osc.start(startTime);
+        osc.stop(startTime + duration);
+      } catch (e) {}
+    }
+
+    function playTimerAlarm() {
+      try {
+        const startTime = getAudioCtx().currentTime;
+        [0, 0.4, 0.8, 1.2, 1.6].forEach((offset, index) => {
+          playBeep(index % 2 === 0 ? 880 : 1175, 0.18, startTime + offset, 0.24, 'square');
+        });
       } catch (e) {}
     }
 
@@ -533,23 +600,13 @@
       appState.maxes.squat = s;
       appState.maxes.rdl = r;
 
-      appState.tms.press = roundToNearest2p5(p * 0.90);
-      appState.tms.squat = roundToNearest2p5(s * 0.90);
-      appState.tms.rdl = roundToNearest2p5(r * 0.90);
+      appState.tms.press = roundToNearest5(p * 0.90);
+      appState.tms.squat = roundToNearest5(s * 0.90);
+      appState.tms.rdl = roundToNearest5(r * 0.90);
 
       updateTMDisplays();
 
-      const curW = appState.settings.active_week || 1;
-      for (let w = curW; w <= 12; w++) {
-        let isPastLogged = false;
-        const loggedObj = appState.weeks[w].logged;
-        for (let day in loggedObj) {
-          if (loggedObj[day] && loggedObj[day].completed) isPastLogged = true;
-        }
-        if (!isPastLogged) {
-          appState.weeks[w].loads = computeWeekLoads(w, appState.tms, appState.maxes);
-        }
-      }
+      recalculateIncompleteLoads();
 
       saveState();
       renderExecutionDashboard();
@@ -558,10 +615,7 @@
     }
 
     function recalculateFutureLoads() {
-      const curW = appState.settings.active_week || 1;
-      for (let w = curW; w <= 12; w++) {
-        appState.weeks[w].loads = computeWeekLoads(w, appState.tms, appState.maxes);
-      }
+      recalculateIncompleteLoads();
       saveState();
       renderExecutionDashboard();
       renderWeeklyGrid();
@@ -949,13 +1003,13 @@
         }
 
         html += `
-          <div onclick="selectDayFromWeekly('${d.id}')" class="min-touch bg-tn-card border ${done ? 'border-tn-green/60 bg-tn-card2' : 'border-tn-border'} rounded-lg p-2.5 flex items-center justify-between text-xs font-mono cursor-pointer">
+          <button type="button" onclick="selectDayFromWeekly('${d.id}')" class="min-touch w-full bg-tn-card border ${done ? 'border-tn-green/60 bg-tn-card2' : 'border-tn-border'} rounded-lg p-2.5 flex items-center justify-between text-left text-xs font-mono">
             <div>
               <span class="font-bold text-white mr-2">${d.short}</span>
               <span class="text-tn-subtext text-[11px]">${contentDesc}</span>
             </div>
             <span class="text-xs px-1 ${done ? 'text-tn-green font-bold' : 'text-tn-muted'}">${done ? '✓' : '→'}</span>
-          </div>
+          </button>
         `;
       });
 
@@ -987,7 +1041,7 @@
 
         html += `
           <div class="bg-tn-card border ${isCurrent ? 'border-tn-green/60' : 'border-tn-border'} rounded-lg overflow-hidden text-xs font-mono">
-            <div onclick="toggleWeekCollapse(${w.week})" class="p-2.5 bg-tn-card2 flex items-center justify-between cursor-pointer">
+            <button type="button" onclick="toggleWeekCollapse(${w.week})" class="w-full p-2.5 bg-tn-card2 flex items-center justify-between text-left">
               <div class="flex items-center gap-2">
                 <span class="font-bold text-white">W${w.week}</span>
                 <span class="text-[10px] text-tn-subtext">${Math.round(w.pct*100)}% (${w.reps}r)</span>
@@ -996,7 +1050,7 @@
                 <span class="text-[11px] ${trainingDaysDone === 5 ? 'text-tn-green font-bold' : 'text-tn-muted'}">${trainingDaysDone}/5</span>
                 <span class="text-tn-muted">${isExpanded ? '▲' : '▼'}</span>
               </div>
-            </div>
+            </button>
 
             ${isExpanded ? `
               <div class="p-2.5 border-t border-tn-border/60 space-y-1 bg-tn-card text-[11px]">
@@ -1053,6 +1107,7 @@
     let timerDuration = 120;
     let timerRemaining = 120;
     let timerInterval = null;
+    let timerEndsAt = null;
 
     function formatTime(sec) {
       const m = Math.floor(sec / 60);
@@ -1064,14 +1119,30 @@
       document.getElementById('timerDigitalDisplay').innerText = formatTime(timerRemaining);
     }
 
-    function setTimerPreset(seconds) {
+    function stopTimer() {
       clearInterval(timerInterval);
       timerInterval = null;
+      timerEndsAt = null;
+      document.getElementById('timerIconPlay').classList.remove('hidden');
+      document.getElementById('timerIconPause').classList.add('hidden');
+    }
+
+    function syncTimer() {
+      if (!timerEndsAt) return;
+      timerRemaining = Math.max(0, Math.ceil((timerEndsAt - Date.now()) / 1000));
+      updateTimerDisplay();
+      if (timerRemaining === 0) {
+        stopTimer();
+        playTimerAlarm();
+        triggerHaptic([150, 100, 150, 100, 150]);
+      }
+    }
+
+    function setTimerPreset(seconds) {
+      stopTimer();
       timerDuration = seconds;
       timerRemaining = seconds;
       updateTimerDisplay();
-      document.getElementById('timerIconPlay').classList.remove('hidden');
-      document.getElementById('timerIconPause').classList.add('hidden');
 
       const presetButtons = document.querySelectorAll('#timerPresetsContainer button');
       presetButtons.forEach(btn => {
@@ -1087,39 +1158,23 @@
 
     function toggleTimer() {
       if (timerInterval) {
-        clearInterval(timerInterval);
-        timerInterval = null;
-        document.getElementById('timerIconPlay').classList.remove('hidden');
-        document.getElementById('timerIconPause').classList.add('hidden');
+        syncTimer();
+        stopTimer();
       } else {
         getAudioCtx();
         if (timerRemaining <= 0) timerRemaining = timerDuration;
+        timerEndsAt = Date.now() + (timerRemaining * 1000);
         document.getElementById('timerIconPlay').classList.add('hidden');
         document.getElementById('timerIconPause').classList.remove('hidden');
-
-        timerInterval = setInterval(() => {
-          timerRemaining--;
-          updateTimerDisplay();
-          if (timerRemaining <= 0) {
-            clearInterval(timerInterval);
-            timerInterval = null;
-            document.getElementById('timerIconPlay').classList.remove('hidden');
-            document.getElementById('timerIconPause').classList.add('hidden');
-            playBeep(880, 0.25);
-            triggerHaptic(80);
-          }
-        }, 1000);
+        timerInterval = setInterval(syncTimer, 250);
       }
       triggerHaptic(15);
     }
 
     function resetTimer() {
-      clearInterval(timerInterval);
-      timerInterval = null;
+      stopTimer();
       timerRemaining = timerDuration;
       updateTimerDisplay();
-      document.getElementById('timerIconPlay').classList.remove('hidden');
-      document.getElementById('timerIconPause').classList.add('hidden');
       triggerHaptic(15);
     }
 
@@ -1167,7 +1222,7 @@
         try {
           const imported = JSON.parse(e.target.result);
           if (imported && imported.weeks && imported.maxes && imported.tms) {
-            appState = imported;
+            appState = normalizeState(imported);
             saveState();
             location.reload();
           }
