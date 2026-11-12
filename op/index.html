@@ -261,10 +261,10 @@
       </div>
 
       <div class="flex items-center gap-1 font-mono text-xs" id="timerPresetsContainer">
+        <button type="button" onclick="setTimerPreset(60)" class="min-touch px-2.5 py-1 rounded bg-tn-card2 text-tn-subtext border border-tn-border">1m</button>
         <button type="button" onclick="setTimerPreset(120)" class="min-touch px-2.5 py-1 rounded bg-tn-green/20 text-tn-green font-bold border border-tn-green/40">2m</button>
         <button type="button" onclick="setTimerPreset(180)" class="min-touch px-2.5 py-1 rounded bg-tn-card2 text-tn-subtext border border-tn-border">3m</button>
         <button type="button" onclick="setTimerPreset(240)" class="min-touch px-2.5 py-1 rounded bg-tn-card2 text-tn-subtext border border-tn-border">4m</button>
-        <button type="button" onclick="setTimerPreset(300)" class="min-touch px-2.5 py-1 rounded bg-tn-card2 text-tn-subtext border border-tn-border">5m</button>
       </div>
 
       <button type="button" onclick="resetTimer()" class="min-touch px-2 py-1 text-[11px] font-mono text-tn-muted hover:text-white">Reset</button>
@@ -273,7 +273,7 @@
 
   <script>
     // --- PROTOCOL SPECIFICATION: Op/FLU + Polarized/Blue ---
-    const STORAGE_KEY = "sentinel_op_flu_blue_v7";
+    const STORAGE_KEY = "sentinel_op_flu_blue_v8";
 
     // 12 Weeks (Two 6-Week TB Waves, Set Waving: 3s -> 4s -> 5s -> 3s -> 4s -> 5s, +5lb Press/Pull, +10lb Squat/RDL in Block 2)
     // Tuesday alternates between 30–60m LSS and 20m HIC (Hill Sprints, Meat Eater II, Fobbits)
@@ -315,6 +315,10 @@
       const squatTM = tms.squat + wk.squatOffset;
       const rdlTM = (tms.rdl || 165) + wk.rdlOffset;
 
+      // Supplemental 5x5 Bench @ 60–65% of TM
+      const backoffLow = roundToNearest2p5(pressTM * 0.60);
+      const backoffHigh = roundToNearest2p5(pressTM * 0.65);
+
       // Weighted Pull-up calculation using Total 1RM (BW + Belt)
       const pull1RM = (maxes.pull || 225) + wk.pressOffset;
       const pullTotal = roundToNearest2p5(pull1RM * wk.pct);
@@ -334,6 +338,7 @@
 
       return {
         press: roundToNearest2p5(pressTM * wk.pct),
+        pressBackoff: `${backoffLow}–${backoffHigh} lb`,
         squat: roundToNearest2p5(squatTM * wk.pct),
         rdl: roundToNearest2p5(rdlTM * wk.pct),
         pull: pullDisplay,
@@ -355,7 +360,7 @@
       } else if (dayId === 'thu') {
         return { squat: Array(heavySets).fill(false), rdl: Array(3).fill(false), lss: false, completed: false };
       } else if (dayId === 'fri') {
-        return { press: Array(heavySets).fill(false), pull: Array(3).fill(false), carries: Array(3).fill(false), curls: Array(2).fill(false), completed: false };
+        return { press: Array(heavySets).fill(false), pressBackoff: Array(5).fill(false), pull: Array(3).fill(false), carries: Array(3).fill(false), curls: Array(2).fill(false), completed: false };
       } else if (dayId === 'sat') {
         return { lssLong: false, completed: false };
       } else if (dayId === 'sun') {
@@ -374,7 +379,7 @@
       };
 
       const state = {
-        version: 7,
+        version: 8,
         settings: {
           active_week: 1,
           active_day: "mon"
@@ -405,11 +410,12 @@
 
     function loadState() {
       try {
-        const raw = localStorage.getItem(STORAGE_KEY);
+        const raw = localStorage.getItem(STORAGE_KEY) || localStorage.getItem("sentinel_op_flu_blue_v7");
         if (raw) {
           const parsed = JSON.parse(raw);
-          if (parsed && parsed.version === 7 && parsed.weeks && parsed.maxes && parsed.tms) {
+          if (parsed && (parsed.version === 8 || parsed.version === 7) && parsed.weeks && parsed.maxes && parsed.tms) {
             appState = parsed;
+            appState.version = 8;
           }
         }
       } catch (e) {
@@ -433,6 +439,15 @@
               sun: createDefaultDayLogged(w, 'sun')
             }
           };
+        } else {
+          // Ensure pressBackoff exists when migrating from v7
+          if (!appState.weeks[w].loads.pressBackoff) {
+            appState.weeks[w].loads = computeWeekLoads(w, appState.tms, appState.maxes);
+          }
+          if (appState.weeks[w].logged && appState.weeks[w].logged.fri && !appState.weeks[w].logged.fri.pressBackoff) {
+            appState.weeks[w].logged.fri.pressBackoff = Array(5).fill(false);
+            checkDayCompletionStatus(w, 'fri');
+          }
         }
       }
     }
@@ -626,10 +641,11 @@
         wkLogged.completed = squatDone && rdlDone && lssDone;
       } else if (dayId === 'fri') {
         const pressDone = wkLogged.press.every(Boolean);
+        const backoffDone = wkLogged.pressBackoff ? wkLogged.pressBackoff.every(Boolean) : true;
         const pullDone = wkLogged.pull.every(Boolean);
         const carriesDone = wkLogged.carries.every(Boolean);
         const curlsDone = wkLogged.curls.every(Boolean);
-        wkLogged.completed = pressDone && pullDone && carriesDone && curlsDone;
+        wkLogged.completed = pressDone && backoffDone && pullDone && carriesDone && curlsDone;
       } else if (dayId === 'sat') {
         wkLogged.completed = !!wkLogged.lssLong;
       } else if (dayId === 'sun') {
@@ -661,6 +677,9 @@
         wkLogged.lss = target;
       } else if (dayId === 'fri') {
         wkLogged.press = wkLogged.press.map(() => target);
+        if (wkLogged.pressBackoff) {
+          wkLogged.pressBackoff = wkLogged.pressBackoff.map(() => target);
+        }
         wkLogged.pull = wkLogged.pull.map(() => target);
         wkLogged.carries = wkLogged.carries.map(() => target);
         wkLogged.curls = wkLogged.curls.map(() => target);
@@ -747,6 +766,7 @@
       } else if (dayId === 'fri') {
         renderLiftingCards(container, w, dayId, loads, [
           { key: 'press', name: 'Bench Press', load: loads.press, color: 'text-tn-green', sets: currentWk.heavySets, reps: currentWk.reps },
+          { key: 'pressBackoff', name: 'Bench 5×5 (Pause)', load: loads.pressBackoff, color: 'text-tn-green', sets: 5, reps: 5 },
           { key: 'pull', name: 'Ring Pull-ups', load: loads.pull, color: 'text-tn-blue', sets: 3, reps: loads.pullReps },
           { key: 'curls', name: 'Bicep Curls', load: '2 RIR', color: 'text-tn-purple', sets: 2, reps: '8-10' }
         ]);
@@ -921,7 +941,7 @@
         } else if (d.id === 'thu') {
           contentDesc = `Zercher (${loads.squat} × ${wk.heavySets}s), RDL (${loads.rdl} × 3s) + 20m LSS`;
         } else if (d.id === 'fri') {
-          contentDesc = `Bench (${loads.press} × ${wk.heavySets}s), Pull-ups (${loads.pull} × ${loads.pullReps}), Carries, Curls`;
+          contentDesc = `Bench (${loads.press} × ${wk.heavySets}s + 5×5 @ ${loads.pressBackoff}), Pull-ups (${loads.pull} × ${loads.pullReps}), Carries, Curls`;
         } else if (d.id === 'sat') {
           contentDesc = wk.satDesc;
         } else if (d.id === 'sun') {
@@ -987,7 +1007,7 @@
                 <div class="text-tn-subtext"><span class="text-tn-muted">MON:</span> Full (${loads.press} / ${loads.squat} / ${loads.pull}) + Curls + 20m LSS</div>
                 <div class="text-tn-subtext"><span class="text-tn-muted">TUE:</span> ${w.tueDesc}</div>
                 <div class="text-tn-subtext"><span class="text-tn-muted">THU:</span> Lower (${loads.squat} × ${w.heavySets}s, ${loads.rdl} × 3s) + 20m LSS</div>
-                <div class="text-tn-subtext"><span class="text-tn-muted">FRI:</span> Upper (${loads.press} × ${w.heavySets}s, ${loads.pull} × 3s) + Carries + Curls</div>
+                <div class="text-tn-subtext"><span class="text-tn-muted">FRI:</span> Upper (${loads.press} × ${w.heavySets}s + 5×5 @ ${loads.pressBackoff}, ${loads.pull} × 3s) + Carries + Curls</div>
                 <div class="text-tn-subtext"><span class="text-tn-muted">SAT:</span> ${w.satDesc}</div>
                 <div class="pt-1 text-right">
                   <button type="button" onclick="jumpToWeek(${w.week})" class="text-tn-green hover:underline">Select Week →</button>
